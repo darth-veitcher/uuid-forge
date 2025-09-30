@@ -140,6 +140,8 @@ disallow_incomplete_defs = false
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+
+[tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -163,14 +165,20 @@ ignore = [
     "D213",  # multi-line docstring summary should start at the second line (conflicts with D212)
 ]
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
     "D",      # no docstrings required in tests
     "ARG",    # unused arguments ok in tests (fixtures)
     "S101",   # assert allowed in tests
+]
+"src/uuid_forge/cli.py" = [
+    "B008",   # typer.Option in function parameters is correct for typer
+]
+"src/uuid_forge/_version.py" = [
+    "ALL",    # generated file, exclude from all linting
 ]
 
 [tool.black]

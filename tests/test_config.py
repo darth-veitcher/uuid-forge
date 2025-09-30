@@ -49,10 +49,7 @@ class TestLoadConfigFromEnv:
 
         config = load_config_from_env()
 
-        expected_namespace = uuid_module.uuid5(
-            uuid_module.NAMESPACE_DNS,
-            "test.example.com"
-        )
+        expected_namespace = uuid_module.uuid5(uuid_module.NAMESPACE_DNS, "test.example.com")
         assert config.namespace == expected_namespace
 
     def test_load_both_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -62,10 +59,7 @@ class TestLoadConfigFromEnv:
 
         config = load_config_from_env()
 
-        expected_namespace = uuid_module.uuid5(
-            uuid_module.NAMESPACE_DNS,
-            "mycompany.com"
-        )
+        expected_namespace = uuid_module.uuid5(uuid_module.NAMESPACE_DNS, "mycompany.com")
         assert config.namespace == expected_namespace
         assert config.salt == "production-salt"
 
@@ -74,16 +68,10 @@ class TestLoadConfigFromEnv:
         monkeypatch.setenv("CUSTOM_NS", "custom.example.com")
         monkeypatch.setenv("CUSTOM_SALT", "custom-salt")
 
-        config = load_config_from_env(
-            namespace_env="CUSTOM_NS",
-            salt_env="CUSTOM_SALT"
-        )
+        config = load_config_from_env(namespace_env="CUSTOM_NS", salt_env="CUSTOM_SALT")
 
         assert config.salt == "custom-salt"
-        expected_namespace = uuid_module.uuid5(
-            uuid_module.NAMESPACE_DNS,
-            "custom.example.com"
-        )
+        expected_namespace = uuid_module.uuid5(uuid_module.NAMESPACE_DNS, "custom.example.com")
         assert config.namespace == expected_namespace
 
     def test_invalid_namespace_value(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -170,9 +158,9 @@ class TestValidateConfigSecurity:
         is_valid, messages = validate_config_security(config)
 
         # Should pass validation
-        assert is_valid or not is_valid  # Implementation dependent
+        assert True  # Implementation dependent
         # May have INFO message
-        info_messages = [msg for msg in messages if "INFO" in msg]
+        [msg for msg in messages if "INFO" in msg]
         # Just check it doesn't fail
 
     def test_default_namespace_info(self) -> None:
@@ -268,7 +256,8 @@ class TestInitConfigFile:
 
             # Salt should be URL-safe base64
             import re
-            assert re.match(r'^[A-Za-z0-9_-]+$', salt_value)
+
+            assert re.match(r"^[A-Za-z0-9_-]+$", salt_value)
 
     def test_config_file_has_usage_instructions(self) -> None:
         """Test that generated config file includes usage instructions."""
@@ -345,10 +334,7 @@ class TestConfigIntegration:
         assert config.salt == prod_salt
 
         # Namespace should be derived from domain
-        expected_ns = uuid_module.uuid5(
-            uuid_module.NAMESPACE_DNS,
-            "production.company.com"
-        )
+        expected_ns = uuid_module.uuid5(uuid_module.NAMESPACE_DNS, "production.company.com")
         assert config.namespace == expected_ns
 
     def test_development_setup(self, monkeypatch: pytest.MonkeyPatch) -> None:

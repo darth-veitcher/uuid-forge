@@ -83,7 +83,8 @@ class TestGenerateSalt:
         salt = generate_salt()
         # URL-safe base64 should only contain alphanumeric, -, and _
         import re
-        assert re.match(r'^[A-Za-z0-9_-]+$', salt), "Salt should be URL-safe"
+
+        assert re.match(r"^[A-Za-z0-9_-]+$", salt), "Salt should be URL-safe"
 
 
 class TestGenerateUUIDOnly:
@@ -212,39 +213,20 @@ class TestGenerateUUIDWithPrefix:
 
     def test_custom_separator(self) -> None:
         """Test custom separator between prefix and UUID."""
-        result = generate_uuid_with_prefix(
-            "test",
-            prefix="TST",
-            separator="_",
-            key="value"
-        )
+        result = generate_uuid_with_prefix("test", prefix="TST", separator="_", key="value")
         assert result.startswith("TST_")
         assert "-" in result  # UUID still has dashes
 
     def test_complex_prefix(self) -> None:
         """Test with complex multi-segment prefix."""
-        result = generate_uuid_with_prefix(
-            "invoice",
-            prefix="INV-EUR-2024",
-            key="value"
-        )
+        result = generate_uuid_with_prefix("invoice", prefix="INV-EUR-2024", key="value")
         assert result.startswith("INV-EUR-2024-")
 
     def test_with_config(self) -> None:
         """Test prefixed generation with custom config."""
         config = IDConfig(salt="test-salt")
-        result1 = generate_uuid_with_prefix(
-            "test",
-            prefix="TST",
-            config=config,
-            key="value"
-        )
-        result2 = generate_uuid_with_prefix(
-            "test",
-            prefix="TST",
-            config=config,
-            key="value"
-        )
+        result1 = generate_uuid_with_prefix("test", prefix="TST", config=config, key="value")
+        result2 = generate_uuid_with_prefix("test", prefix="TST", config=config, key="value")
         assert result1 == result2
 
 
@@ -268,23 +250,14 @@ class TestExtractUUIDFromPrefixed:
     def test_extract_with_custom_separator(self) -> None:
         """Test extraction with custom separator."""
         original_uuid = generate_uuid_only("test", key="value")
-        prefixed = generate_uuid_with_prefix(
-            "test",
-            prefix="TST",
-            separator="_",
-            key="value"
-        )
+        prefixed = generate_uuid_with_prefix("test", prefix="TST", separator="_", key="value")
         extracted = extract_uuid_from_prefixed(prefixed, separator="_")
         assert extracted == original_uuid
 
     def test_extract_complex_prefix(self) -> None:
         """Test extraction from complex multi-segment prefix."""
         original_uuid = generate_uuid_only("test", key="value")
-        prefixed = generate_uuid_with_prefix(
-            "test",
-            prefix="INV-EUR-2024",
-            key="value"
-        )
+        prefixed = generate_uuid_with_prefix("test", prefix="INV-EUR-2024", key="value")
         extracted = extract_uuid_from_prefixed(prefixed)
         assert extracted == original_uuid
 
@@ -299,23 +272,14 @@ class TestExtractUUIDFromPrefixed:
 
         # Generate prefixed ID
         prefixed = generate_uuid_with_prefix(
-            "invoice",
-            prefix="INV-EUR",
-            config=config,
-            region="EUR",
-            number=12345
+            "invoice", prefix="INV-EUR", config=config, region="EUR", number=12345
         )
 
         # Extract UUID
         extracted = extract_uuid_from_prefixed(prefixed)
 
         # Regenerate from business data
-        regenerated = generate_uuid_only(
-            "invoice",
-            config=config,
-            region="EUR",
-            number=12345
-        )
+        regenerated = generate_uuid_only("invoice", config=config, region="EUR", number=12345)
 
         assert extracted == regenerated
 
@@ -393,20 +357,10 @@ class TestIntegration:
         config = IDConfig(salt="production-salt")
 
         # Service A generates UUID for invoice
-        invoice_uuid = generate_uuid_only(
-            "invoice",
-            config=config,
-            region="EUR",
-            number=12345
-        )
+        invoice_uuid = generate_uuid_only("invoice", config=config, region="EUR", number=12345)
 
         # Service B regenerates UUID from business data (no communication needed)
-        regenerated_uuid = generate_uuid_only(
-            "invoice",
-            config=config,
-            region="EUR",
-            number=12345
-        )
+        regenerated_uuid = generate_uuid_only("invoice", config=config, region="EUR", number=12345)
 
         # Should be identical
         assert invoice_uuid == regenerated_uuid
@@ -423,27 +377,16 @@ class TestIntegration:
         config = IDConfig(salt="microservices-salt")
 
         # Order Service creates order
-        order_uuid = generate_uuid_only(
-            "order",
-            config=config,
-            customer_id=789,
-            order_number=12345
-        )
+        order_uuid = generate_uuid_only("order", config=config, customer_id=789, order_number=12345)
 
         # Invoice Service generates invoice for the same order
         invoice_uuid = generate_uuid_only(
-            "invoice",
-            config=config,
-            order_id=str(order_uuid),
-            invoice_number=1
+            "invoice", config=config, order_id=str(order_uuid), invoice_number=1
         )
 
         # Shipping Service regenerates order UUID from business data
         shipping_order_uuid = generate_uuid_only(
-            "order",
-            config=config,
-            customer_id=789,
-            order_number=12345
+            "order", config=config, customer_id=789, order_number=12345
         )
 
         # Should match original
@@ -458,18 +401,10 @@ class TestIntegration:
         test_config = IDConfig(salt="test-environment-salt")
 
         # Generate UUID in test
-        test_uuid = generate_uuid_only(
-            "user",
-            config=test_config,
-            email="test@example.com"
-        )
+        test_uuid = generate_uuid_only("user", config=test_config, email="test@example.com")
 
         # Later, regenerate for assertions
-        expected_uuid = generate_uuid_only(
-            "user",
-            config=test_config,
-            email="test@example.com"
-        )
+        expected_uuid = generate_uuid_only("user", config=test_config, email="test@example.com")
 
         assert test_uuid == expected_uuid
 

@@ -75,9 +75,7 @@ class IDConfig:
     def __post_init__(self) -> None:
         """Validate configuration after initialization."""
         if not isinstance(self.namespace, uuid_module.UUID):
-            raise TypeError(
-                f"namespace must be a UUID, got {type(self.namespace).__name__}"
-            )
+            raise TypeError(f"namespace must be a UUID, got {type(self.namespace).__name__}")
 
 
 def generate_salt(length: int = 32) -> str:
@@ -103,7 +101,7 @@ def generate_salt(length: int = 32) -> str:
 
         # Generate a new salt for your deployment
         salt = generate_salt()
-        print(f"Add this to your .env file: UUID_SALT={salt}")
+        # Add this to your .env file: UUID_SALT={salt}
         ```
 
     <!-- Example Test:
@@ -124,9 +122,7 @@ def generate_salt(length: int = 32) -> str:
     -->
     """
     if length < 16:
-        raise ValueError(
-            f"Salt length must be at least 16 bytes for security, got {length}"
-        )
+        raise ValueError(f"Salt length must be at least 16 bytes for security, got {length}")
 
     return secrets.token_urlsafe(length)
 
@@ -174,7 +170,7 @@ def _normalize_input(*args: Any, **kwargs: Any) -> str:
 
     # Add positional arguments
     for arg in args:
-        if hasattr(arg, '__repr__'):
+        if hasattr(arg, "__repr__"):
             parts.append(repr(arg))
         else:
             parts.append(str(arg))
@@ -182,7 +178,7 @@ def _normalize_input(*args: Any, **kwargs: Any) -> str:
     # Add keyword arguments (sorted for consistency)
     for key in sorted(kwargs.keys()):
         value = kwargs[key]
-        if hasattr(value, '__repr__'):
+        if hasattr(value, "__repr__"):
             parts.append(f"{key}={repr(value)}")
         else:
             parts.append(f"{key}={value}")
@@ -191,10 +187,7 @@ def _normalize_input(*args: Any, **kwargs: Any) -> str:
 
 
 def generate_uuid_only(
-    entity_type: str,
-    *args: Any,
-    config: IDConfig | None = None,
-    **kwargs: Any
+    entity_type: str, *args: Any, config: IDConfig | None = None, **kwargs: Any
 ) -> uuid_module.UUID:
     """Generate a deterministic UUID from entity type and business data.
 
@@ -307,7 +300,7 @@ def generate_uuid_with_prefix(
     prefix: str | None = None,
     separator: str = "-",
     config: IDConfig | None = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> str:
     """Generate a deterministic UUID with an optional human-readable prefix.
 
@@ -411,10 +404,7 @@ def generate_uuid_with_prefix(
     return uuid_str
 
 
-def extract_uuid_from_prefixed(
-    prefixed_id: str,
-    separator: str = "-"
-) -> uuid_module.UUID:
+def extract_uuid_from_prefixed(prefixed_id: str, separator: str = "-") -> uuid_module.UUID:
     """Extract the UUID from a prefixed identifier.
 
     This function parses a prefixed identifier string (created with
@@ -594,12 +584,7 @@ class UUIDGenerator:
         """
         self.config = config or IDConfig()
 
-    def generate(
-        self,
-        entity_type: str,
-        *args: Any,
-        **kwargs: Any
-    ) -> uuid_module.UUID:
+    def generate(self, entity_type: str, *args: Any, **kwargs: Any) -> uuid_module.UUID:
         """Generate a deterministic UUID using this generator's configuration.
 
         This is a convenience method that calls generate_uuid_only with the
@@ -621,7 +606,7 @@ class UUIDGenerator:
         *args: Any,
         prefix: str | None = None,
         separator: str = "-",
-        **kwargs: Any
+        **kwargs: Any,
     ) -> str:
         """Generate a deterministic UUID with prefix using this generator's configuration.
 
@@ -639,10 +624,5 @@ class UUIDGenerator:
             A string with optional prefix and UUID.
         """
         return generate_uuid_with_prefix(
-            entity_type,
-            *args,
-            prefix=prefix,
-            separator=separator,
-            config=self.config,
-            **kwargs
+            entity_type, *args, prefix=prefix, separator=separator, config=self.config, **kwargs
         )

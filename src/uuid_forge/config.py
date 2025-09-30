@@ -14,8 +14,7 @@ from uuid_forge.core import IDConfig, generate_salt
 
 
 def load_config_from_env(
-    namespace_env: str = "UUID_FORGE_NAMESPACE",
-    salt_env: str = "UUID_FORGE_SALT"
+    namespace_env: str = "UUID_FORGE_NAMESPACE", salt_env: str = "UUID_FORGE_SALT"
 ) -> IDConfig:
     """Load UUID generation configuration from environment variables.
 
@@ -99,10 +98,7 @@ def load_config_from_env(
     if namespace_value:
         # Convert domain string to UUID namespace
         try:
-            namespace = uuid_module.uuid5(
-                uuid_module.NAMESPACE_DNS,
-                namespace_value
-            )
+            namespace = uuid_module.uuid5(uuid_module.NAMESPACE_DNS, namespace_value)
         except Exception as e:
             raise ValueError(
                 f"Invalid namespace value in {namespace_env}: {namespace_value}"
@@ -193,9 +189,9 @@ def validate_config_security(config: IDConfig, strict: bool = False) -> tuple[bo
         config_bad = IDConfig()
         is_valid, messages = validate_config_security(config_bad)
         if not is_valid:
-            print("Configuration issues:")
-            for msg in messages:
-                print(f"  - {msg}")
+            # Configuration issues:
+            # - [error messages would be shown here]
+            pass
 
         # Secure config
         config_good = IDConfig(salt="xvW9Kz_kRzPmNqYvTaWcXdYeFgZhAiB")
@@ -265,11 +261,8 @@ def validate_config_security(config: IDConfig, strict: bool = False) -> tuple[bo
     return is_valid, messages
 
 
-def init_config_file(
-    output_path: Path | None = None,
-    force: bool = False
-) -> Path:
-    """Initialize a configuration template file with generated salt.
+def init_config_file(output_path: Path | None = None, force: bool = False) -> Path:
+    r"""Initialize a configuration template file with generated salt.
 
     This function creates a template configuration file (typically .env format)
     with a freshly generated cryptographic salt and usage instructions. This
@@ -295,11 +288,12 @@ def init_config_file(
 
         # Initialize config in current directory
         config_path = init_config_file()
-        print(f"Configuration template created at: {config_path}")
+        # Configuration template created at: {config_path}
 
         # Read the generated configuration
         with open(config_path) as f:
-            print(f.read())
+            content = f.read()
+            # Content would be displayed here
         ```
 
     <!-- Example Test:
@@ -350,8 +344,7 @@ def init_config_file(
     # Check if file exists
     if output_path.exists() and not force:
         raise FileExistsError(
-            f"Configuration file already exists at {output_path}. "
-            "Use force=True to overwrite."
+            f"Configuration file already exists at {output_path}. Use force=True to overwrite."
         )
 
     # Generate new salt

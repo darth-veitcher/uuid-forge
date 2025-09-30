@@ -150,7 +150,7 @@ def generate(
 
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 @app.command()
@@ -190,7 +190,7 @@ def extract(
 
     except ValueError as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 @app.command()
@@ -232,7 +232,7 @@ def new_salt(
 
     except ValueError as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 @app.command()
@@ -289,10 +289,10 @@ config = load_config_from_env()"""
     except FileExistsError as e:
         console.print(f"[red]Error:[/red] {e}")
         console.print("\n[dim]Use --force to overwrite the existing file.[/dim]")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 @app.command()
@@ -356,7 +356,7 @@ def validate(
 
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 @app.command()
@@ -403,14 +403,14 @@ uuid = generate_uuid_only(
     region="EUR",
     number=12345
 )
-print(uuid)"""
+# UUID: {uuid}"""
 
         syntax = Syntax(example_code, "python", theme="monokai")
         console.print(syntax)
 
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 @app.command()
@@ -460,7 +460,7 @@ def docs(
         console.print('  uv pip install -e ".[docs]"')
         console.print("  # or")
         console.print('  pip install mkdocs mkdocs-material "mkdocstrings[python]"')
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
 
     # Find docs directory
     docs_dir = Path("docs")
@@ -508,7 +508,7 @@ def docs(
         except subprocess.CalledProcessError as e:
             console.print("\n[red]Error:[/red] Failed to serve docs")
             console.print(f"[dim]{e}[/dim]")
-            raise typer.Exit(code=1)
+            raise typer.Exit(code=1) from e
     else:
         console.print("[cyan]Building documentation...[/cyan]")
 
@@ -530,7 +530,7 @@ def docs(
             console.print("[red]Error:[/red] Failed to build docs")
             if e.stderr:
                 console.print(f"\n[dim]{e.stderr}[/dim]")
-            raise typer.Exit(code=1)
+            raise typer.Exit(code=1) from e
 
 
 @app.command()
