@@ -41,7 +41,6 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "black>=25.9.0",
     "mypy>=1.18.2",
     "nox>=2025.5.1",
     "pytest>=8.4.2",
@@ -160,7 +159,7 @@ select = [
     "D",   # pydocstyle
 ]
 ignore = [
-    "E501",  # line too long (handled by black)
+    "E501",  # line too long (handled by ruff format)
     "D100",  # missing docstring in public module (we have module docstrings)
     "D104",  # missing docstring in public package
     "D203",  # 1 blank line required before class docstring (conflicts with D211)
@@ -183,20 +182,8 @@ convention = "google"
     "ALL",    # generated file, exclude from all linting
 ]
 
-[tool.black]
-line-length = 100
-target-version = ['py311']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
+[tool.ruff.format]
+# Use ruff for formatting instead of black
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
