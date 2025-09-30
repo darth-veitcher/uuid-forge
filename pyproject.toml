@@ -71,11 +71,10 @@ Issues = "https://github.com/darth-veitcher/uuid-forge/issues"
 source = "vcs"
 fallback-version = "0.1.0.dev0"
 
-[tool.setuptools_scm]
-# Configure setuptools-scm (used by hatch-vcs)
-write_to = "src/uuid_forge/_version.py"
-# Use local versions by default for development (node-and-date allows +g12a4d81be)
-local_scheme = "node-and-date"
+[tool.hatch.version.raw-options]
+# Configure setuptools-scm (used internally by hatch-vcs)
+# Disable local versions to avoid PyPI/TestPyPI rejection of +g hash suffixes
+local_scheme = "no-local-version"
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/uuid_forge/_version.py"
