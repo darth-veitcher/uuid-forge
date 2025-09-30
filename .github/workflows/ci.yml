@@ -197,6 +197,7 @@ jobs:
         run: |
           uv build
           uv publish --publish-url https://test.pypi.org/legacy/
+          echo "TestPyPI publish completed"
 
   docker:
     name: Build and Push Docker Image
