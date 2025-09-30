@@ -78,13 +78,14 @@ version-file = "src/uuid_forge/_version.py"
 packages = ["src/uuid_forge"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "src"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
     "-v",
     "--strict-markers",
+    "--doctest-modules",
     "--cov=uuid_forge",
     "--cov-report=term-missing",
     "--cov-report=html",
