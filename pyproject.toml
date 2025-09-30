@@ -62,10 +62,10 @@ test = [
 uuid-forge = "uuid_forge.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/uuid-forge"
-Documentation = "https://yourusername.github.io/uuid-forge"
-Repository = "https://github.com/yourusername/uuid-forge"
-Issues = "https://github.com/yourusername/uuid-forge/issues"
+Homepage = "https://github.com/darth-veitcher/uuid-forge"
+Documentation = "https://darth-veitcher.github.io/uuid-forge"
+Repository = "https://github.com/darth-veitcher/uuid-forge"
+Issues = "https://github.com/darth-veitcher/uuid-forge/issues"
 
 [tool.hatch.version]
 source = "vcs"
