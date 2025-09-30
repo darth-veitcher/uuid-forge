@@ -13,17 +13,20 @@ Thank you for your interest in contributing to UUID-Forge! This guide will help 
 ### Setting Up Development Environment
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/yourusername/uuid-forge.git
    cd uuid-forge
    ```
 
 2. **Install dependencies:**
+
    ```bash
    uv sync --dev
    ```
 
 3. **Activate the virtual environment:**
+
    ```bash
    source .venv/bin/activate  # On Unix/macOS
    # or
@@ -38,16 +41,19 @@ Thank you for your interest in contributing to UUID-Forge! This guide will help 
 ### Running Tests
 
 Run the full test suite:
+
 ```bash
 uv run pytest
 ```
 
 Run with coverage:
+
 ```bash
 uv run pytest --cov=uuid_forge --cov-report=html
 ```
 
 Run specific test categories:
+
 ```bash
 # Unit tests only
 uv run pytest tests/ -k "not integration"
@@ -64,18 +70,21 @@ uv run pytest tests/ -k "performance"
 We use several tools to maintain code quality:
 
 **Formatting:**
+
 ```bash
 uv run black src tests
 uv run isort src tests
 ```
 
 **Linting:**
+
 ```bash
 uv run ruff check src tests
 uv run mypy src
 ```
 
 **All quality checks:**
+
 ```bash
 uv run pre-commit run --all-files
 ```
@@ -156,6 +165,7 @@ All contributions must include tests:
 - **Performance tests** for optimization claims
 
 Example test structure:
+
 ```python
 def test_uuid_generation_deterministic():
     """Test that UUID generation is deterministic."""
@@ -204,6 +214,7 @@ Before submitting a pull request:
 5. **Write a clear commit message**
 
 Pull request checklist:
+
 - [ ] Tests pass locally
 - [ ] Code follows style guidelines
 - [ ] Documentation updated
@@ -233,6 +244,7 @@ Closes #issue-number
 ```
 
 Types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -242,6 +254,7 @@ Types:
 - `chore`: Build/maintenance tasks
 
 Examples:
+
 ```
 feat(core): add support for custom hash algorithms
 

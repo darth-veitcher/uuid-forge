@@ -52,6 +52,7 @@ uv run mkdocs build --strict 2>&1 | grep WARNING
 ```
 
 **Update these files:**
+
 - `CHANGELOG.md` - Add new version entry
 - `README.md` - Update examples if needed
 - `docs/` - Update any relevant documentation
@@ -73,12 +74,14 @@ grep -r "__version__" src/uuid_forge/
 ### 1. Update Version Numbers
 
 **pyproject.toml:**
+
 ```toml
 [project]
 version = "1.2.3"
 ```
 
-**src/uuid_forge/_version.py:**
+**src/uuid_forge/\_version.py:**
+
 ```python
 __version__ = "1.2.3"
 ```
@@ -89,24 +92,30 @@ __version__ = "1.2.3"
 ## [1.2.3] - 2024-01-15
 
 ### Added
+
 - New feature descriptions
 - New functionality
 
 ### Changed
+
 - Modified behavior descriptions
 - Updated dependencies
 
 ### Fixed
+
 - Bug fix descriptions
 - Performance improvements
 
 ### Deprecated
+
 - Features marked for removal
 
 ### Removed
+
 - Removed features
 
 ### Security
+
 - Security improvements
 ```
 
@@ -153,14 +162,17 @@ Create a Pull Request from `release/v1.2.3` to `main`:
 **PR Title:** `Release v1.2.3`
 
 **PR Description:**
+
 ```markdown
 ## Release v1.2.3
 
 ### Changes
+
 - Summary of major changes
 - Link to detailed CHANGELOG.md
 
 ### Pre-release Checklist
+
 - [x] All tests passing
 - [x] Documentation updated
 - [x] Version numbers updated
@@ -168,6 +180,7 @@ Create a Pull Request from `release/v1.2.3` to `main`:
 - [x] Manual testing completed
 
 ### Post-merge Actions
+
 - [ ] Create GitHub release
 - [ ] Build and publish to PyPI
 - [ ] Update documentation site
@@ -200,7 +213,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   test:
@@ -211,7 +224,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install uv
         run: pip install uv
@@ -234,7 +247,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install uv
         run: pip install uv
@@ -298,7 +311,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install uv
         run: pip install uv
@@ -420,6 +433,7 @@ git push origin --delete release/v1.2.3
 ### 4. Prepare Next Development
 
 **Update version for development:**
+
 ```toml
 # pyproject.toml
 [project]
@@ -449,6 +463,7 @@ git push origin develop
 ### 2. Social Media (Optional)
 
 **Twitter:**
+
 ```
 🎉 UUID-Forge v1.2.3 is now available!
 
@@ -545,20 +560,24 @@ uv run pip list --outdated
 ### Common Issues
 
 **Version Mismatch:**
+
 - Ensure all files have consistent version numbers
 - Check both `pyproject.toml` and `_version.py`
 
 **Build Failures:**
+
 - Clean build directories: `rm -rf dist/ build/`
 - Check for missing dependencies
 - Verify Python version compatibility
 
 **Upload Failures:**
+
 - Check PyPI credentials
 - Verify package name availability
 - Ensure proper file permissions
 
 **Documentation Deployment:**
+
 - Check GitHub Pages settings
 - Verify mike configuration
 - Test documentation build locally
@@ -573,6 +592,7 @@ After successful release:
 - Review and improve release process
 
 For more information:
+
 - [Contributing Guidelines](contributing.md)
 - [Development Setup](setup.md)
 - [Testing Guide](testing.md)

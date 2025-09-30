@@ -665,9 +665,9 @@ name: Test Suite
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
@@ -675,32 +675,32 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.11', '3.12']
+        python-version: ["3.11", "3.12"]
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Install uv
-      run: |
-        pip install uv
+      - name: Install uv
+        run: |
+          pip install uv
 
-    - name: Install dependencies
-      run: |
-        uv sync --dev
+      - name: Install dependencies
+        run: |
+          uv sync --dev
 
-    - name: Run tests
-      run: |
-        uv run pytest --cov=uuid_forge --cov-report=xml
+      - name: Run tests
+        run: |
+          uv run pytest --cov=uuid_forge --cov-report=xml
 
-    - name: Upload coverage
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
 ```
 
 ## Test Best Practices

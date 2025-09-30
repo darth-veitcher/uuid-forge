@@ -45,22 +45,22 @@ except ValueError as e:
 
 ### Core Settings
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `namespace` | `str` or `UUID` | `None` | Default namespace for UUID generation |
-| `version` | `int` | `5` | UUID version (3, 4, or 5) |
-| `format` | `str` | `"hex"` | Output format (`hex`, `urn`, `bytes`) |
-| `case` | `str` | `"lower"` | Case for hex output (`upper`, `lower`) |
-| `separator` | `str` | `"-"` | Separator character for hex format |
+| Option      | Type            | Default   | Description                            |
+| ----------- | --------------- | --------- | -------------------------------------- |
+| `namespace` | `str` or `UUID` | `None`    | Default namespace for UUID generation  |
+| `version`   | `int`           | `5`       | UUID version (3, 4, or 5)              |
+| `format`    | `str`           | `"hex"`   | Output format (`hex`, `urn`, `bytes`)  |
+| `case`      | `str`           | `"lower"` | Case for hex output (`upper`, `lower`) |
+| `separator` | `str`           | `"-"`     | Separator character for hex format     |
 
 ### Advanced Settings
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `seed` | `int` | `None` | Random seed for reproducible generation |
-| `clock_seq` | `int` | `None` | Clock sequence for version 1 UUIDs |
-| `node` | `int` | `None` | Node ID for version 1 UUIDs |
-| `json_encoder` | `JSONEncoder` | `None` | Custom JSON encoder for object serialization |
+| Option         | Type          | Default | Description                                  |
+| -------------- | ------------- | ------- | -------------------------------------------- |
+| `seed`         | `int`         | `None`  | Random seed for reproducible generation      |
+| `clock_seq`    | `int`         | `None`  | Clock sequence for version 1 UUIDs           |
+| `node`         | `int`         | `None`  | Node ID for version 1 UUIDs                  |
+| `json_encoder` | `JSONEncoder` | `None`  | Custom JSON encoder for object serialization |
 
 ## Configuration File Format
 
@@ -110,13 +110,13 @@ environments:
 
 Configuration via environment variables:
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `UUID_FORGE_NAMESPACE` | Default namespace | `my-app` |
-| `UUID_FORGE_VERSION` | UUID version | `5` |
-| `UUID_FORGE_FORMAT` | Output format | `hex` |
-| `UUID_FORGE_CASE` | Case for hex output | `lower` |
-| `UUID_FORGE_SEPARATOR` | Separator character | `-` |
+| Variable                 | Description             | Example                |
+| ------------------------ | ----------------------- | ---------------------- |
+| `UUID_FORGE_NAMESPACE`   | Default namespace       | `my-app`               |
+| `UUID_FORGE_VERSION`     | UUID version            | `5`                    |
+| `UUID_FORGE_FORMAT`      | Output format           | `hex`                  |
+| `UUID_FORGE_CASE`        | Case for hex output     | `lower`                |
+| `UUID_FORGE_SEPARATOR`   | Separator character     | `-`                    |
 | `UUID_FORGE_CONFIG_FILE` | Configuration file path | `/path/to/config.yaml` |
 
 ## Examples

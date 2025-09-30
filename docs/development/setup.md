@@ -58,17 +58,20 @@ uv run pre-commit install
 The development environment includes:
 
 ### Core Dependencies
+
 - **typer**: CLI framework
 - **rich**: Rich text and beautiful formatting
 - **pydantic**: Data validation (if used)
 
 ### Development Tools
+
 - **pytest**: Testing framework
 - **pytest-cov**: Coverage reporting
 - **pytest-benchmark**: Performance testing
 - **hypothesis**: Property-based testing
 
 ### Code Quality
+
 - **black**: Code formatting
 - **isort**: Import sorting
 - **ruff**: Fast Python linter
@@ -76,6 +79,7 @@ The development environment includes:
 - **pre-commit**: Git hooks for code quality
 
 ### Documentation
+
 - **mkdocs**: Documentation generator
 - **mkdocs-material**: Material theme for MkDocs
 - **mkdocstrings**: API documentation from docstrings
@@ -238,21 +242,25 @@ VS Code settings (`.vscode/settings.json`):
 ### Test Categories
 
 **Unit Tests**: Test individual functions and classes
+
 ```bash
 uv run pytest tests/test_core.py::test_uuid_generation
 ```
 
 **Integration Tests**: Test component interactions
+
 ```bash
 uv run pytest tests/integration/
 ```
 
 **Property Tests**: Test with generated data using Hypothesis
+
 ```bash
 uv run pytest tests/test_properties.py
 ```
 
 **Performance Tests**: Benchmark performance
+
 ```bash
 uv run pytest tests/test_performance.py --benchmark-only
 ```
@@ -484,6 +492,7 @@ uv run twine check dist/*
 - **Code Review**: Submit PRs for feedback
 
 For development questions, include:
+
 - Python version
 - Operating system
 - Full error messages

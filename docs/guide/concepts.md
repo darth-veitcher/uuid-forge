@@ -20,16 +20,19 @@ UUID-Forge specializes in **deterministic UUID generation**, meaning that given 
 UUID-Forge supports multiple UUID versions:
 
 ### Version 3 (MD5 Hash)
+
 - Uses MD5 hashing algorithm
 - Deterministic based on namespace and name
 - Legacy support (MD5 is considered weak)
 
 ### Version 4 (Random)
+
 - Randomly generated
 - Not deterministic by nature
 - Highest entropy
 
 ### Version 5 (SHA-1 Hash)
+
 - Uses SHA-1 hashing algorithm
 - Deterministic based on namespace and name
 - **Recommended** for most deterministic use cases

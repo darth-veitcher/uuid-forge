@@ -14,6 +14,7 @@ forge = UUIDForge(version=5)
 ```
 
 **Benefits:**
+
 - Strong SHA-1 hashing
 - Excellent collision resistance
 - Industry standard for deterministic UUIDs
@@ -28,6 +29,7 @@ forge = UUIDForge(version=3)
 ```
 
 **Limitations:**
+
 - Uses MD5 (considered cryptographically weak)
 - Higher collision probability
 

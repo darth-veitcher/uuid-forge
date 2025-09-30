@@ -7,10 +7,10 @@ Complete reference for UUID-Forge command-line interface.
 The UUID-Forge CLI provides command-line access to UUID generation functionality.
 
 ::: uuid_forge.cli.app
-    options:
-      show_root_heading: true
-      show_source: false
-      heading_level: 3
+options:
+show_root_heading: true
+show_source: false
+heading_level: 3
 
 ## Main Commands
 
@@ -23,9 +23,11 @@ uuid-forge generate [OPTIONS] [INPUTS]...
 ```
 
 **Arguments:**
+
 - `INPUTS`: Input data for UUID generation (strings, files, etc.)
 
 **Options:**
+
 - `--namespace TEXT`: Namespace to use for generation
 - `--version {3,4,5}`: UUID version (default: 5)
 - `--format {hex,urn,bytes}`: Output format (default: hex)
@@ -68,6 +70,7 @@ uuid-forge config [SUBCOMMAND] [OPTIONS]
 ```
 
 **Subcommands:**
+
 - `show`: Display current configuration
 - `get KEY`: Get specific configuration value
 - `set KEY VALUE`: Set configuration value
@@ -103,6 +106,7 @@ uuid-forge validate [OPTIONS] [UUIDS]...
 ```
 
 **Options:**
+
 - `--input-file PATH`: Read UUIDs from file
 - `--check-deterministic INPUT UUID`: Check if UUID matches expected for input
 - `--format {hex,urn}`: Expected UUID format
@@ -133,6 +137,7 @@ uuid-forge namespace [SUBCOMMAND] [OPTIONS]
 ```
 
 **Subcommands:**
+
 - `list`: List available namespaces
 - `create NAME`: Create new namespace
 - `delete NAME`: Delete namespace
@@ -275,6 +280,7 @@ cat users.txt | xargs -P 4 -I {} uuid-forge generate "{}" --namespace users
 Supported input file formats:
 
 **Plain text (one input per line):**
+
 ```
 user1@example.com
 user2@example.com
@@ -282,12 +288,14 @@ user3@example.com
 ```
 
 **JSON lines:**
+
 ```json
 {"email": "user1@example.com", "name": "User 1"}
 {"email": "user2@example.com", "name": "User 2"}
 ```
 
 **CSV:**
+
 ```csv
 email,name
 user1@example.com,User 1
@@ -385,6 +393,7 @@ DEBUG: Generated UUID: 550e8400-e29b-41d4-a716-446655440000
 ### Common Issues
 
 **Issue: "Command not found"**
+
 ```bash
 # Solution: Ensure UUID-Forge is installed and in PATH
 pip install uuid-forge
@@ -392,12 +401,14 @@ which uuid-forge
 ```
 
 **Issue: "Invalid UUID version"**
+
 ```bash
 # Solution: Use valid version (3, 4, or 5)
 uuid-forge generate "test" --version 5
 ```
 
 **Issue: "Configuration file not found"**
+
 ```bash
 # Solution: Create configuration or specify path
 uuid-forge config init
