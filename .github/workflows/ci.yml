@@ -165,7 +165,9 @@ jobs:
         run: uv python install 3.11
 
       - name: Build and publish to PyPI
-        run: uv publish
+        run: |
+          uv build
+          uv publish
         env:
           # Use clean versions for PyPI (no local identifiers like +g12a4d81be)
           SETUPTOOLS_SCM_LOCAL_SCHEME: "no-local-version"
@@ -193,7 +195,9 @@ jobs:
         run: uv python install 3.11
 
       - name: Build and publish to TestPyPI
-        run: uv publish --index testpypi
+        run: |
+          uv build
+          uv publish --index testpypi
 
   docker:
     name: Build and Push Docker Image
