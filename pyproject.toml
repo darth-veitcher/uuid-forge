@@ -187,3 +187,6 @@ convention = "google"
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
+exclude = [
+    "src/uuid_forge/_version.py",  # generated file, exclude from formatting
+]
