@@ -142,77 +142,11 @@ jobs:
             uv run mike deploy --push dev
           fi
 
-  build-pypi:
-    name: Build for PyPI
-    runs-on: ubuntu-latest
-    needs: [test, lint]
-    if: github.ref == 'refs/heads/main' || (github.event_name == 'release' && github.event.action == 'published')
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-
-      - name: Set up Python
-        run: uv python install 3.11
-
-      - name: Build package with clean version
-        run: |
-          # Set environment variable for clean PyPI-compatible versions
-          export SETUPTOOLS_SCM_LOCAL_SCHEME=no-local-version
-          uv build
-
-      - name: Show built version
-        run: |
-          echo "Built packages for PyPI:"
-          ls -la dist/
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-pypi
-          path: dist/
-
-  build-test-pypi:
-    name: Build for TestPyPI
-    runs-on: ubuntu-latest
-    needs: [test, lint]
-    if: github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/feat')
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-
-      - name: Set up Python
-        run: uv python install 3.11
-
-      - name: Build package with local version
-        run: |
-          # Allow local versions for TestPyPI
-          uv build
-
-      - name: Show built version
-        run: |
-          echo "Built packages for TestPyPI:"
-          ls -la dist/
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-test-pypi
-          path: dist/
-
   publish-pypi:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: [build-pypi]
+    needs: [test, lint]
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'release' && github.event.action == 'published')
     environment:
       name: pypi
       url: https://pypi.org/p/uuid-forge
@@ -220,19 +154,27 @@ jobs:
       id-token: write
 
     steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
         with:
-          name: dist-pypi
-          path: dist/
+          fetch-depth: 0
 
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Build and publish to PyPI
+        run: uv publish
+        env:
+          # Use clean versions for PyPI (no local identifiers like +g12a4d81be)
+          SETUPTOOLS_SCM_LOCAL_SCHEME: "no-local-version"
 
   publish-test-pypi:
     name: Publish to TestPyPI
     runs-on: ubuntu-latest
-    needs: [build-test-pypi]
+    needs: [test, lint]
+    if: github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/feat')
     environment:
       name: test-pypi
       url: https://test.pypi.org/p/uuid-forge
@@ -240,16 +182,18 @@ jobs:
       id-token: write
 
     steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
         with:
-          name: dist-test-pypi
-          path: dist/
+          fetch-depth: 0
 
-      - name: Publish to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Build and publish to TestPyPI
+        run: uv publish --index testpypi
 
   docker:
     name: Build and Push Docker Image
