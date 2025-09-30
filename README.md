@@ -98,7 +98,11 @@ Add the generated salt to your environment:
 export UUID_FORGE_SALT='your-generated-salt-here'
 ```
 
-### 2. Generate UUIDs
+### 2. Choose Your API Style
+
+UUID-Forge offers both **functional** and **object-oriented** approaches:
+
+#### Functional API (Recommended for Simple Cases)
 
 ```python
 from uuid_forge import generate_uuid_only, load_config_from_env
@@ -112,6 +116,44 @@ user_uuid = generate_uuid_only(
     config=config,
     email="alice@example.com"
 )
+```
+
+#### Object-Oriented API (Great for Services)
+
+```python
+from uuid_forge import UUIDGenerator, IDConfig
+import os
+
+# Create a generator with your configuration
+generator = UUIDGenerator(
+    config=IDConfig(salt=os.getenv("UUID_FORGE_SALT"))
+)
+
+# Generate multiple UUIDs with same config (no repetitive config passing)
+user_uuid = generator.generate("user", email="alice@example.com")
+invoice_uuid = generator.generate("invoice", number=12345, region="EUR")
+order_uuid = generator.generate("order", user_id=str(user_uuid), total=99.99)
+
+# Generate with human-readable prefixes
+prefixed_id = generator.generate_with_prefix(
+    "user",
+    prefix="USER",
+    email="alice@example.com"
+)
+# Result: "USER-550e8400-e29b-41d4-a716-446655440000"
+
+# Perfect for service classes - encapsulates configuration
+class InvoiceService:
+    def __init__(self, salt: str):
+        self.uuid_gen = UUIDGenerator(config=IDConfig(salt=salt))
+
+    def create_invoice_id(self, region: str, number: int) -> str:
+        return self.uuid_gen.generate_with_prefix(
+            "invoice",
+            prefix=f"INV-{region}",
+            region=region,
+            number=number
+        )
 ```
 
 ### 3. Use Across All Systems
@@ -143,6 +185,119 @@ uuid_from_data = generate_uuid_only(
 # All systems now accessible with the same UUID
 ```
 
+## 🏛️ Advanced Usage Patterns
+
+### Repository Pattern with UUID Generation
+
+```python
+from uuid_forge import UUIDGenerator, IDConfig
+from typing import Protocol
+import os
+
+class EntityRepository(Protocol):
+    def generate_id(self, **kwargs) -> uuid.UUID: ...
+
+class InvoiceRepository:
+    def __init__(self):
+        self.uuid_generator = UUIDGenerator(
+            config=IDConfig(
+                namespace=uuid.uuid5(uuid.NAMESPACE_DNS, "invoices.mycompany.com"),
+                salt=os.getenv("UUID_FORGE_SALT")
+            )
+        )
+
+    def generate_id(self, region: str, number: int) -> uuid.UUID:
+        return self.uuid_generator.generate("invoice", region=region, number=number)
+
+    def generate_prefixed_id(self, region: str, number: int) -> str:
+        return self.uuid_generator.generate_with_prefix(
+            "invoice",
+            prefix=f"INV-{region}",
+            region=region,
+            number=number
+        )
+```
+
+### Factory Pattern for Multi-Entity Systems
+
+```python
+from uuid_forge import UUIDGenerator, IDConfig
+from enum import Enum
+
+class EntityType(Enum):
+    USER = "user"
+    ORDER = "order"
+    PRODUCT = "product"
+    INVOICE = "invoice"
+
+class UUIDFactory:
+    def __init__(self, config: IDConfig):
+        self.generators = {
+            EntityType.USER: UUIDGenerator(config),
+            EntityType.ORDER: UUIDGenerator(config),
+            EntityType.PRODUCT: UUIDGenerator(config),
+            EntityType.INVOICE: UUIDGenerator(config),
+        }
+
+    def create_uuid(self, entity_type: EntityType, **attributes) -> uuid.UUID:
+        return self.generators[entity_type].generate(entity_type.value, **attributes)
+
+    def create_prefixed_uuid(self, entity_type: EntityType, **attributes) -> str:
+        prefix_map = {
+            EntityType.USER: "USR",
+            EntityType.ORDER: "ORD",
+            EntityType.PRODUCT: "PRD",
+            EntityType.INVOICE: "INV",
+        }
+        return self.generators[entity_type].generate_with_prefix(
+            entity_type.value,
+            prefix=prefix_map[entity_type],
+            **attributes
+        )
+
+# Usage
+factory = UUIDFactory(config=load_config_from_env())
+user_uuid = factory.create_uuid(EntityType.USER, email="alice@example.com")
+order_id = factory.create_prefixed_uuid(EntityType.ORDER, user_id=user_uuid, items=["A", "B"])
+```
+
+### Dependency Injection with UUID Services
+
+```python
+from abc import ABC, abstractmethod
+from uuid_forge import UUIDGenerator, IDConfig
+
+class UUIDService(ABC):
+    @abstractmethod
+    def generate_user_uuid(self, email: str) -> uuid.UUID: ...
+
+    @abstractmethod
+    def generate_order_uuid(self, user_id: uuid.UUID, timestamp: int) -> uuid.UUID: ...
+
+class ProductionUUIDService(UUIDService):
+    def __init__(self, config: IDConfig):
+        self.generator = UUIDGenerator(config)
+
+    def generate_user_uuid(self, email: str) -> uuid.UUID:
+        return self.generator.generate("user", email=email)
+
+    def generate_order_uuid(self, user_id: uuid.UUID, timestamp: int) -> uuid.UUID:
+        return self.generator.generate("order", user_id=str(user_id), timestamp=timestamp)
+
+class TestUUIDService(UUIDService):
+    def __init__(self):
+        # Use deterministic config for testing
+        self.generator = UUIDGenerator(
+            config=IDConfig(salt="test-salt-for-reproducible-tests")
+        )
+
+    def generate_user_uuid(self, email: str) -> uuid.UUID:
+        return self.generator.generate("user", email=email)
+
+    def generate_order_uuid(self, user_id: uuid.UUID, timestamp: int) -> uuid.UUID:
+        return self.generator.generate("order", user_id=str(user_id), timestamp=timestamp)
+```
+
 ## 📋 Use Cases
 
 ### ✅ Perfect For:
@@ -152,12 +307,104 @@ uuid_from_data = generate_uuid_only(
 - **Zero-Coordination Design**: No central ID service required
 - **Deterministic Testing**: Reproducible IDs for test scenarios
 - **Data Migration**: Consistent IDs across old and new systems
+- **Service-Oriented Architecture**: Clean dependency injection patterns
+- **Multi-Tenant Applications**: Isolated UUID namespaces per tenant
 
 ### ❌ Not Ideal For:
 
 - **Simple CRUD Apps**: Use database auto-increment
 - **Sequential IDs Required**: Use database sequences
 - **No Salt Available**: UUIDs become predictable (security risk)
+- **High-Performance Scenarios**: UUID generation has computational overhead
+
+## ⚙️ Configuration Options
+
+UUID-Forge provides flexible configuration through the `IDConfig` class:
+
+### Basic Configuration
+
+```python
+from uuid_forge import IDConfig
+import uuid
+import os
+
+# Default configuration (no salt - not recommended for production)
+config = IDConfig()
+
+# Production configuration with salt
+config = IDConfig(salt=os.getenv("UUID_FORGE_SALT"))
+
+# Custom namespace for your organization
+config = IDConfig(
+    namespace=uuid.uuid5(uuid.NAMESPACE_DNS, "mycompany.com"),
+    salt=os.getenv("UUID_FORGE_SALT")
+)
+```
+
+### Environment-Based Configuration
+
+```python
+from uuid_forge import load_config_from_env
+
+# Load from default environment variables
+config = load_config_from_env()
+# Reads: UUID_FORGE_NAMESPACE and UUID_FORGE_SALT
+
+# Load from custom environment variables
+config = load_config_from_env(
+    namespace_env="MY_UUID_NAMESPACE",
+    salt_env="MY_UUID_SALT"
+)
+```
+
+### Configuration Hierarchy
+
+1. **Namespace**: Provides logical separation between applications
+   - Default: `uuid.NAMESPACE_DNS`
+   - Custom: `uuid.uuid5(uuid.NAMESPACE_DNS, "your-domain.com")`
+   - From env: Set `UUID_FORGE_NAMESPACE=your-domain.com`
+
+2. **Salt**: Adds cryptographic security to prevent UUID prediction
+   - Default: `""` (empty - **not secure for production**)
+   - Generated: Use `uuid-forge new-salt` command
+   - From env: Set `UUID_FORGE_SALT=your-generated-salt`
+
+### Configuration Patterns
+
+#### Service-Based Configuration
+
+```python
+from uuid_forge import UUIDGenerator, IDConfig
+import os
+
+class UserService:
+    def __init__(self):
+        self.uuid_generator = UUIDGenerator(
+            config=IDConfig(
+                namespace=uuid.uuid5(uuid.NAMESPACE_DNS, "users.mycompany.com"),
+                salt=os.getenv("UUID_FORGE_SALT")
+            )
+        )
+
+    def create_user_uuid(self, email: str) -> uuid.UUID:
+        return self.uuid_generator.generate("user", email=email)
+```
+
+#### Multi-Tenant Configuration
+
+```python
+class TenantUUIDService:
+    def __init__(self, tenant_id: str):
+        self.generator = UUIDGenerator(
+            config=IDConfig(
+                namespace=uuid.uuid5(uuid.NAMESPACE_DNS, f"tenant-{tenant_id}.mycompany.com"),
+                salt=os.getenv("UUID_FORGE_SALT")
+            )
+        )
+
+    def generate_entity_uuid(self, entity_type: str, **kwargs) -> uuid.UUID:
+        return self.generator.generate(entity_type, **kwargs)
+```
 
 ## 🔒 Security
 
@@ -184,15 +431,59 @@ Store it securely:
 
 ## 📖 Documentation
 
-Full documentation is available at: [https://yourusername.github.io/uuid-forge](https://yourusername.github.io/uuid-forge)
+Full documentation is available at: [https://darth-veitcher.github.io/uuid-forge](https://darth-veitcher.github.io/uuid-forge)
 
-- [Installation Guide](https://yourusername.github.io/uuid-forge/installation/)
-- [Quick Start Tutorial](https://yourusername.github.io/uuid-forge/quickstart/)
-- [API Reference](https://yourusername.github.io/uuid-forge/api/)
-- [Best Practices](https://yourusername.github.io/uuid-forge/best-practices/)
-- [Migration Guide](https://yourusername.github.io/uuid-forge/migration/)
+- [API Reference](https://darth-veitcher.github.io/uuid-forge/api/core/)
+- [Getting Started Guide](https://darth-veitcher.github.io/uuid-forge/gettting-started/quickstart/)
+- [Configuration Options](https://darth-veitcher.github.io/uuid-forge/api/core/#configuration)
+- [Best Practices](https://darth-veitcher.github.io/uuid-forge/api/core/#security)
+- [CLI Reference](https://darth-veitcher.github.io/uuid-forge/api/core/#cli-usage)
 
-## 🛠️ CLI Usage
+## � API Reference
+
+### Functional API
+
+```python
+from uuid_forge import generate_uuid_only, generate_uuid_with_prefix, extract_uuid_from_prefixed
+
+# Generate UUID
+uuid_obj = generate_uuid_only("user", config=config, email="alice@example.com")
+
+# Generate with prefix
+prefixed_id = generate_uuid_with_prefix("user", config=config, prefix="USR", email="alice@example.com")
+
+# Extract UUID from prefixed ID
+uuid_obj = extract_uuid_from_prefixed("USR-550e8400-e29b-41d4-a716-446655440000")
+```
+
+### Object-Oriented API
+
+```python
+from uuid_forge import UUIDGenerator, IDConfig
+
+# Create generator
+generator = UUIDGenerator(config=IDConfig(salt="your-salt"))
+
+# Generate UUIDs
+uuid_obj = generator.generate("user", email="alice@example.com")
+prefixed_id = generator.generate_with_prefix("user", prefix="USR", email="alice@example.com")
+```
+
+### Configuration API
+
+```python
+from uuid_forge import IDConfig, load_config_from_env, generate_salt
+
+# Create configurations
+config = IDConfig(salt="your-salt")
+config = load_config_from_env()
+
+# Generate secure salt
+salt = generate_salt()  # 32 bytes by default
+salt = generate_salt(64)  # Custom length
+```
+
+## �🛠️ CLI Usage
 
 UUID-Forge includes a comprehensive CLI:
 
@@ -238,28 +529,31 @@ The combination is hashed to produce a UUID that's:
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/uuid-forge.git
+git clone https://github.com/darth-veitcher/uuid-forge.git
 cd uuid-forge
 
-# Install with uv
-uv sync --all-extras
+# Install with uv (includes all dev dependencies)
+uv sync --all-groups
 
 # Run tests
-pytest
+uv run pytest
 
 # Run tests with coverage
-pytest --cov=uuid_forge --cov-report=html
+uv run pytest --cov=uuid_forge --cov-report=html
 
-# Run linting
-ruff check src tests
-mypy src
+# Run linting and formatting
+uv run ruff check src tests
+uv run ruff format src tests
+uv run mypy src
 
 # Run all checks with nox
-nox
+uv run nox
 
-# Build documentation
-cd docs
-mkdocs serve
+# Build the package
+uv build
+
+# Build and serve documentation
+uv run mkdocs serve
 ```
 
 ## 📊 Project Stats
@@ -286,14 +580,14 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 🙏 Acknowledgments
 
 - Inspired by the need for zero-coordination microservices
-- Built with modern Python best practices
+- Built with modern Python best practices using `uv` and `hatch-vcs`
 - Follows PEP-8, uses strict typing, and comprehensive testing
 
 ## 📮 Contact
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/uuid-forge/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/uuid-forge/discussions)
-- **Email**: your.email@example.com
+- **Issues**: [GitHub Issues](https://github.com/darth-veitcher/uuid-forge/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/darth-veitcher/uuid-forge/discussions)
+- **Repository**: [https://github.com/darth-veitcher/uuid-forge](https://github.com/darth-veitcher/uuid-forge)
 
 ---
 
