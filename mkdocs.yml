@@ -97,32 +97,32 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting Started:
-    - Installation: getting-started/installation.md
-    - Quick Start: getting-started/quickstart.md
-    - Configuration: getting-started/configuration.md
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+      - Configuration: getting-started/configuration.md
   - User Guide:
-    - Core Concepts: guide/concepts.md
-    - Basic Usage: guide/basic-usage.md
-    - Advanced Usage: guide/advanced-usage.md
-    - CLI Reference: guide/cli.md
-    - Best Practices: guide/best-practices.md
+      - Core Concepts: guide/concepts.md
+      - Basic Usage: guide/basic-usage.md
+      - Advanced Usage: guide/advanced-usage.md
+      - CLI Reference: guide/cli.md
+      - Best Practices: guide/best-practices.md
   - Use Cases:
-    - Microservices: use-cases/microservices.md
-    - Multi-Storage: use-cases/multi-storage.md
-    - Testing: use-cases/testing.md
-    - Migration: use-cases/migration.md
+      - Microservices: use-cases/microservices.md
+      - Multi-Storage: use-cases/multi-storage.md
+      - Testing: use-cases/testing.md
+      - Migration: use-cases/migration.md
   - API Reference:
-    - Core: api/core.md
-    - Config: api/config.md
-    - CLI: api/cli.md
+      - Core: api/core.md
+      - Config: api/config.md
+      - CLI: api/cli.md
   - Development:
-    - Contributing: development/contributing.md
-    - Development Setup: development/setup.md
-    - Testing: development/testing.md
-    - Release Process: development/release.md
+      - Contributing: development/contributing.md
+      - Development Setup: development/setup.md
+      - Testing: development/testing.md
+      - Release Process: development/release.md
   - About:
-    - Changelog: about/changelog.md
-    - License: about/license.md
+      - Changelog: about/changelog.md
+      - License: about/license.md
 
 extra:
   version:

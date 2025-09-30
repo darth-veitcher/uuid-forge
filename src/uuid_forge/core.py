@@ -54,19 +54,19 @@ class IDConfig:
         )
         ```
 
-    <!-- Example Test:
-    >>> from uuid_forge.core import IDConfig
-    >>> import uuid
-    >>> config = IDConfig(namespace=uuid.NAMESPACE_DNS, salt="test-salt")
-    >>> assert config.namespace == uuid.NAMESPACE_DNS
-    >>> assert config.salt == "test-salt"
-    >>> # Test immutability
-    >>> try:
-    ...     config.salt = "new-salt"
-    ...     assert False, "Should not be able to modify frozen dataclass"
-    ... except AttributeError:
-    ...     pass
-    -->
+    Examples:
+        >>> from uuid_forge.core import IDConfig
+        >>> import uuid
+        >>> config = IDConfig(namespace=uuid.NAMESPACE_DNS, salt="test-salt")
+        >>> config.namespace == uuid.NAMESPACE_DNS
+        True
+        >>> config.salt == "test-salt"
+        True
+        >>> # Test immutability - this should raise FrozenInstanceError
+        >>> config.salt = "new-salt"  # doctest: +IGNORE_EXCEPTION_DETAIL
+        Traceback (most recent call last):
+        ...
+        FrozenInstanceError: cannot assign to field 'salt'
     """
 
     namespace: uuid_module.UUID = uuid_module.NAMESPACE_DNS
@@ -104,22 +104,23 @@ def generate_salt(length: int = 32) -> str:
         # Add this to your .env file: UUID_SALT={salt}
         ```
 
-    <!-- Example Test:
-    >>> from uuid_forge.core import generate_salt
-    >>> salt = generate_salt()
-    >>> assert isinstance(salt, str)
-    >>> assert len(salt) > 0
-    >>> # Test different lengths
-    >>> salt_16 = generate_salt(16)
-    >>> salt_64 = generate_salt(64)
-    >>> assert len(salt_16) < len(salt_64)
-    >>> # Test minimum length validation
-    >>> try:
-    ...     generate_salt(15)
-    ...     assert False, "Should raise ValueError for length < 16"
-    ... except ValueError as e:
-    ...     assert "at least 16 bytes" in str(e)
-    -->
+    Examples:
+        >>> from uuid_forge.core import generate_salt
+        >>> salt = generate_salt()
+        >>> isinstance(salt, str)
+        True
+        >>> len(salt) > 0
+        True
+        >>> # Test different lengths
+        >>> salt_16 = generate_salt(16)
+        >>> salt_64 = generate_salt(64)
+        >>> len(salt_16) < len(salt_64)
+        True
+        >>> # Test minimum length validation
+        >>> generate_salt(15)  # doctest: +IGNORE_EXCEPTION_DETAIL
+        Traceback (most recent call last):
+        ...
+        ValueError: Salt length must be at least 16 bytes for security, got 15
     """
     if length < 16:
         raise ValueError(f"Salt length must be at least 16 bytes for security, got {length}")
@@ -152,19 +153,21 @@ def _normalize_input(*args: Any, **kwargs: Any) -> str:
         result2 = _normalize_input("order", customer_id=456)
         ```
 
-    <!-- Example Test:
-    >>> from uuid_forge.core import _normalize_input
-    >>> # Test with positional args
-    >>> result1 = _normalize_input("invoice", "EUR", 123)
-    >>> assert "invoice" in result1
-    >>> # Test with kwargs (should be sorted)
-    >>> result2 = _normalize_input(region="EUR", number=123)
-    >>> result3 = _normalize_input(number=123, region="EUR")
-    >>> assert result2 == result3, "kwargs should be sorted for consistency"
-    >>> # Test with mixed args
-    >>> result4 = _normalize_input("invoice", region="EUR")
-    >>> assert "invoice" in result4 and "region" in result4
-    -->
+    Examples:
+        >>> from uuid_forge.core import _normalize_input
+        >>> # Test with positional args
+        >>> result1 = _normalize_input("invoice", "EUR", 123)
+        >>> "invoice" in result1
+        True
+        >>> # Test with kwargs (should be sorted)
+        >>> result2 = _normalize_input(region="EUR", number=123)
+        >>> result3 = _normalize_input(number=123, region="EUR")
+        >>> result2 == result3  # kwargs should be sorted for consistency
+        True
+        >>> # Test with mixed args
+        >>> result4 = _normalize_input("invoice", region="EUR")
+        >>> "invoice" in result4 and "region" in result4
+        True
     """
     parts = []
 
@@ -247,31 +250,36 @@ def generate_uuid_only(
         assert invoice_uuid == regenerated  # Always the same!
         ```
 
-    <!-- Example Test:
-    >>> from uuid_forge.core import generate_uuid_only, IDConfig
-    >>> import uuid
-    >>> # Test basic generation
-    >>> uuid1 = generate_uuid_only("test", key="value")
-    >>> assert isinstance(uuid1, uuid.UUID)
-    >>> # Test idempotency
-    >>> uuid2 = generate_uuid_only("test", key="value")
-    >>> assert uuid1 == uuid2, "Same inputs should produce same UUID"
-    >>> # Test with different inputs
-    >>> uuid3 = generate_uuid_only("test", key="other")
-    >>> assert uuid1 != uuid3, "Different inputs should produce different UUIDs"
-    >>> # Test with config
-    >>> config = IDConfig(salt="test-salt")
-    >>> uuid4 = generate_uuid_only("test", key="value", config=config)
-    >>> uuid5 = generate_uuid_only("test", key="value", config=config)
-    >>> assert uuid4 == uuid5, "Same config should produce same UUID"
-    >>> # Test that different config produces different UUID
-    >>> uuid6 = generate_uuid_only("test", key="value")
-    >>> assert uuid4 != uuid6, "Different config should produce different UUID"
-    >>> # Test kwargs order doesn't matter
-    >>> uuid7 = generate_uuid_only("test", a=1, b=2)
-    >>> uuid8 = generate_uuid_only("test", b=2, a=1)
-    >>> assert uuid7 == uuid8, "Kwargs order shouldn't matter"
-    -->
+    Examples:
+        >>> from uuid_forge.core import generate_uuid_only, IDConfig
+        >>> import uuid
+        >>> # Test basic generation
+        >>> uuid1 = generate_uuid_only("test", key="value")
+        >>> isinstance(uuid1, uuid.UUID)
+        True
+        >>> # Test idempotency
+        >>> uuid2 = generate_uuid_only("test", key="value")
+        >>> uuid1 == uuid2  # Same inputs should produce same UUID
+        True
+        >>> # Test with different inputs
+        >>> uuid3 = generate_uuid_only("test", key="other")
+        >>> uuid1 != uuid3  # Different inputs should produce different UUIDs
+        True
+        >>> # Test with config
+        >>> config = IDConfig(salt="test-salt")
+        >>> uuid4 = generate_uuid_only("test", key="value", config=config)
+        >>> uuid5 = generate_uuid_only("test", key="value", config=config)
+        >>> uuid4 == uuid5  # Same config should produce same UUID
+        True
+        >>> # Test that different config produces different UUID
+        >>> uuid6 = generate_uuid_only("test", key="value")
+        >>> uuid4 != uuid6  # Different config should produce different UUID
+        True
+        >>> # Test kwargs order doesn't matter
+        >>> uuid7 = generate_uuid_only("test", a=1, b=2)
+        >>> uuid8 = generate_uuid_only("test", b=2, a=1)
+        >>> uuid7 == uuid8  # Kwargs order shouldn't matter
+        True
     """
     if config is None:
         config = IDConfig()
@@ -369,32 +377,38 @@ def generate_uuid_with_prefix(
         # Result: "INV_550e8400-e29b-41d4-a716-446655440000"
         ```
 
-    <!-- Example Test:
-    >>> from uuid_forge.core import generate_uuid_with_prefix, IDConfig
-    >>> # Test without prefix
-    >>> id1 = generate_uuid_with_prefix("test", key="value")
-    >>> assert "-" in id1  # Should be a UUID string
-    >>> assert not id1.startswith("test")  # No prefix
-    >>> # Test with prefix
-    >>> id2 = generate_uuid_with_prefix("test", prefix="TST", key="value")
-    >>> assert id2.startswith("TST-"), f"Should start with prefix, got {id2}"
-    >>> # Test idempotency with prefix
-    >>> id3 = generate_uuid_with_prefix("test", prefix="TST", key="value")
-    >>> assert id2 == id3, "Same inputs should produce same result"
-    >>> # Test that different prefixes don't change UUID part
-    >>> id4 = generate_uuid_with_prefix("test", prefix="OTHER", key="value")
-    >>> uuid_part_2 = id2.split("-", 1)[1]
-    >>> uuid_part_4 = id4.split("-", 1)[1]
-    >>> assert uuid_part_2 == uuid_part_4, "UUID should be same regardless of prefix"
-    >>> # Test custom separator
-    >>> id5 = generate_uuid_with_prefix("test", prefix="TST", separator="_", key="value")
-    >>> assert id5.startswith("TST_"), "Should use custom separator"
-    >>> # Test with config
-    >>> config = IDConfig(salt="test-salt")
-    >>> id6 = generate_uuid_with_prefix("test", prefix="TST", config=config, key="value")
-    >>> id7 = generate_uuid_with_prefix("test", prefix="TST", config=config, key="value")
-    >>> assert id6 == id7, "Config should be applied consistently"
-    -->
+    Examples:
+        >>> from uuid_forge.core import generate_uuid_with_prefix, IDConfig
+        >>> # Test without prefix
+        >>> id1 = generate_uuid_with_prefix("test", key="value")
+        >>> "-" in id1  # Should be a UUID string
+        True
+        >>> not id1.startswith("test")  # No prefix
+        True
+        >>> # Test with prefix
+        >>> id2 = generate_uuid_with_prefix("test", prefix="TST", key="value")
+        >>> id2.startswith("TST-")
+        True
+        >>> # Test idempotency with prefix
+        >>> id3 = generate_uuid_with_prefix("test", prefix="TST", key="value")
+        >>> id2 == id3  # Same inputs should produce same result
+        True
+        >>> # Test that different prefixes don't change UUID part
+        >>> id4 = generate_uuid_with_prefix("test", prefix="OTHER", key="value")
+        >>> uuid_part_2 = id2.split("-", 1)[1]
+        >>> uuid_part_4 = id4.split("-", 1)[1]
+        >>> uuid_part_2 == uuid_part_4  # UUID should be same regardless of prefix
+        True
+        >>> # Test custom separator
+        >>> id5 = generate_uuid_with_prefix("test", prefix="TST", separator="_", key="value")
+        >>> id5.startswith("TST_")  # Should use custom separator
+        True
+        >>> # Test with config
+        >>> config = IDConfig(salt="test-salt")
+        >>> id6 = generate_uuid_with_prefix("test", prefix="TST", config=config, key="value")
+        >>> id7 = generate_uuid_with_prefix("test", prefix="TST", config=config, key="value")
+        >>> id6 == id7  # Config should be applied consistently
+        True
     """
     generated_uuid = generate_uuid_only(entity_type, *args, config=config, **kwargs)
     uuid_str = str(generated_uuid)
@@ -457,36 +471,39 @@ def extract_uuid_from_prefixed(prefixed_id: str, separator: str = "-") -> uuid_m
         assert extracted_uuid == regenerated_uuid
         ```
 
-    <!-- Example Test:
-    >>> from uuid_forge.core import (
-    ...     generate_uuid_with_prefix,
-    ...     extract_uuid_from_prefixed,
-    ...     generate_uuid_only
-    ... )
-    >>> import uuid
-    >>> # Test with prefixed UUID
-    >>> prefixed = generate_uuid_with_prefix("test", prefix="TST", key="value")
-    >>> extracted = extract_uuid_from_prefixed(prefixed)
-    >>> assert isinstance(extracted, uuid.UUID)
-    >>> # Verify extracted UUID matches original
-    >>> original = generate_uuid_only("test", key="value")
-    >>> assert extracted == original
-    >>> # Test with plain UUID string
-    >>> plain_uuid = str(generate_uuid_only("test", key="other"))
-    >>> extracted2 = extract_uuid_from_prefixed(plain_uuid)
-    >>> assert isinstance(extracted2, uuid.UUID)
-    >>> assert str(extracted2) == plain_uuid
-    >>> # Test with custom separator
-    >>> prefixed_custom = generate_uuid_with_prefix("test", prefix="TST", separator="_", key="value")
-    >>> extracted3 = extract_uuid_from_prefixed(prefixed_custom, separator="_")
-    >>> assert extracted3 == original
+    Examples:
+        >>> from uuid_forge.core import (
+        ...     generate_uuid_with_prefix,
+        ...     extract_uuid_from_prefixed,
+        ...     generate_uuid_only
+        ... )
+        >>> import uuid
+        >>> # Test with prefixed UUID
+        >>> prefixed = generate_uuid_with_prefix("test", prefix="TST", key="value")
+        >>> extracted = extract_uuid_from_prefixed(prefixed)
+        >>> isinstance(extracted, uuid.UUID)
+        True
+        >>> # Verify extracted UUID matches original
+        >>> original = generate_uuid_only("test", key="value")
+        >>> extracted == original
+        True
+        >>> # Test with plain UUID string
+        >>> plain_uuid = str(generate_uuid_only("test", key="other"))
+        >>> extracted2 = extract_uuid_from_prefixed(plain_uuid)
+        >>> isinstance(extracted2, uuid.UUID)
+        True
+        >>> str(extracted2) == plain_uuid
+        True
+        >>> # Test with custom separator
+        >>> prefixed_custom = generate_uuid_with_prefix("test", prefix="TST", separator="_", key="value")
+        >>> extracted3 = extract_uuid_from_prefixed(prefixed_custom, separator="_")
+    >>> extracted3 == original
+    True
     >>> # Test with invalid input
-    >>> try:
-    ...     extract_uuid_from_prefixed("not-a-uuid")
-    ...     assert False, "Should raise ValueError"
-    ... except ValueError as e:
-    ...     assert "No valid UUID found" in str(e)
-    -->
+    >>> extract_uuid_from_prefixed("not-a-uuid")  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    ...
+    ValueError: No valid UUID found in 'not-a-uuid'
     """
     # Split by separator and try to find UUID pattern
     parts = prefixed_id.split(separator)
@@ -547,32 +564,37 @@ class UUIDGenerator:
         )
         ```
 
-    <!-- Example Test:
-    >>> from uuid_forge.core import UUIDGenerator, IDConfig
-    >>> import uuid
-    >>> # Test with default config
-    >>> gen = UUIDGenerator()
-    >>> uuid1 = gen.generate("test", key="value")
-    >>> assert isinstance(uuid1, uuid.UUID)
-    >>> # Test idempotency
-    >>> uuid2 = gen.generate("test", key="value")
-    >>> assert uuid1 == uuid2
-    >>> # Test with custom config
-    >>> config = IDConfig(salt="test-salt")
-    >>> gen_custom = UUIDGenerator(config=config)
-    >>> uuid3 = gen_custom.generate("test", key="value")
-    >>> uuid4 = gen_custom.generate("test", key="value")
-    >>> assert uuid3 == uuid4
-    >>> # Different config produces different UUID
-    >>> assert uuid1 != uuid3
-    >>> # Test generate_with_prefix
-    >>> prefixed = gen.generate_with_prefix("test", prefix="TST", key="value")
-    >>> assert prefixed.startswith("TST-")
-    >>> # Verify UUID part matches
-    >>> from uuid_forge.core import extract_uuid_from_prefixed
-    >>> extracted = extract_uuid_from_prefixed(prefixed)
-    >>> assert extracted == uuid1
-    -->
+    Examples:
+        >>> from uuid_forge.core import UUIDGenerator, IDConfig
+        >>> import uuid
+        >>> # Test with default config
+        >>> gen = UUIDGenerator()
+        >>> uuid1 = gen.generate("test", key="value")
+        >>> isinstance(uuid1, uuid.UUID)
+        True
+        >>> # Test idempotency
+        >>> uuid2 = gen.generate("test", key="value")
+        >>> uuid1 == uuid2
+        True
+        >>> # Test with custom config
+        >>> config = IDConfig(salt="test-salt")
+        >>> gen_custom = UUIDGenerator(config=config)
+        >>> uuid3 = gen_custom.generate("test", key="value")
+        >>> uuid4 = gen_custom.generate("test", key="value")
+        >>> uuid3 == uuid4
+        True
+        >>> # Different config produces different UUID
+        >>> uuid1 != uuid3
+        True
+        >>> # Test generate_with_prefix
+        >>> prefixed = gen.generate_with_prefix("test", prefix="TST", key="value")
+        >>> prefixed.startswith("TST-")
+        True
+        >>> # Verify UUID part matches
+        >>> from uuid_forge.core import extract_uuid_from_prefixed
+        >>> extracted = extract_uuid_from_prefixed(prefixed)
+        >>> extracted == uuid1
+        True
     """
 
     def __init__(self, config: IDConfig | None = None) -> None:
