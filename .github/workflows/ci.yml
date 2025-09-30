@@ -94,7 +94,6 @@ jobs:
 
       - name: Build documentation
         run: |
-          cd docs
           uv run mkdocs build --strict
 
       - name: Upload documentation artifacts
