@@ -1,6 +1,21 @@
+# Development
 .claude/
 .serena/
 CLAUDE.md
 .mcp.json
 .gitmodules
 .devcontainer/
+.env
+
+# Python
+__pypackages__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+__pycache__/
+.coverage
+coverage.xml
+.venv/
+htmlcov/
+.ruff_cache/
+.mypy_cache/

@@ -1,420 +1,300 @@
-# UUID Forge
+# UUID-Forge
 
-## Purpose and Vision
+**Deterministic UUID Generation for Cross-System Coordination**
 
-Deterministic UUID generation for cross-system coordination. The architecture separates development tools, application services, and host concerns into distinct, secure layers with carefully designed network boundaries.
+[![PyPI version](https://badge.fury.io/py/uuid-forge.svg)](https://badge.fury.io/py/uuid-forge)
+[![Python versions](https://img.shields.io/pypi/pyversions/uuid-forge.svg)](https://pypi.org/project/uuid-forge/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code coverage](https://codecov.io/gh/yourusername/uuid-forge/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/uuid-forge)
 
-### Core Objectives
+UUID-Forge provides a simple, secure way to generate **deterministic UUIDs** that remain consistent across multiple storage systems without requiring inter-service communication or centralized ID generation.
 
-- **Complete Host Isolation**: Zero development dependencies or services installed on the host machine
-- **Network Segmentation**: Isolated networks preventing cross-contamination between development tools and application services
-- **Transparent Operations**: Standard Docker Compose commands only - no custom shell scripts or opaque abstractions
-- **Professional Development Experience**: Full VS Code integration with MCP (Model Context Protocol) services for AI-assisted development
-- **Security-First Design**: Multiple layers of isolation with principle of least privilege
+## 🎯 The Problem
 
-## Quickstart (5 minutes)
+When building microservices or distributed systems, you often need the same entity to have the same ID across multiple storage systems:
 
-Get up and running with this AI-powered development environment in under 5 minutes.
+- **Postgres** (primary database)
+- **S3** (document storage)
+- **Redis** (caching)
+- **QDrant** (vector database)
+- **MinIO** (object storage)
 
-### Prerequisites
+Traditional approaches require:
+- ❌ Central ID generation service (single point of failure)
+- ❌ Database lookups before accessing storage (performance impact)
+- ❌ Storing mappings between systems (complexity)
+- ❌ Service-to-service communication (latency)
 
-- [ ] Docker Desktop installed and running
-- [ ] VS Code with [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
-- [ ] Git for cloning the repository
+## 💡 The Solution
 
-### Steps
+UUID-Forge generates **deterministic UUIDs** from your business data:
 
-1. **Clone and Open**
+```python
+from uuid_forge import generate_uuid_only, IDConfig
+import os
 
-   ```bash
-   git clone https://github.com/darthveitcher/uuid-forge.git
-   cd uuid-forge
-   code .
-   ```
+config = IDConfig(salt=os.getenv("UUID_FORGE_SALT"))
 
-2. **Start Development Environment**
+# Generate UUID from business data
+invoice_uuid = generate_uuid_only(
+    "invoice",
+    config=config,
+    region="EUR",
+    number=12345
+)
 
-   - VS Code will detect `.devcontainer` and prompt "Reopen in Container"
-   - Click "Reopen in Container" (or use Command Palette: `Dev Containers: Reopen in Container`)
-   - First-time setup builds the container (2-3 minutes)
+# Later, regenerate the EXACT SAME UUID from the same data
+# No database lookup needed!
+regenerated = generate_uuid_only(
+    "invoice",
+    config=config,
+    region="EUR",
+    number=12345
+)
 
-3. **Verify Everything is Running**
-
-   ```bash
-   # In the VS Code terminal (inside container)
-   docker compose ps  # Should show all services healthy
-   ```
-
-4. **Start Using Claude**
-
-   ```bash
-   # Claude CLI is pre-configured with all MCP services
-   claude "explain the architecture of this project"
-   claude "help me add a new API endpoint"
-   ```
-
-5. **Access Your Application**
-   - Run `docker compose -f app/compose.yml up -d`
-   - Open http://localhost:8000 in your browser
-   - The FastAPI application is now running with hot-reload enabled
-
-That's it! You're now running a fully isolated development environment with AI assistance.
-
-### Next Steps
-
-- Run `claude "show me what MCP services are available"` to explore AI capabilities
-- Check the [Development Workflow](#development-workflow) section for detailed usage
-- See [MCP Services Integration](#mcp-services-integration) for available AI tools
-
-## Architecture Overview
-
-### Four-Layer Design
-
-1. **Host Machine** - Provides Docker runtime only, remains completely clean
-2. **Development Environment** - VS Code devcontainer with development tools and AI services
-3. **Development Services** - MCP servers, search engines, and development utilities
-4. **Application Stack** - Your actual application with isolated database and caching
-
-### Network Topology
-
-```
-┌─────────────────┐    ┌─────────────────┐
-│   Host Machine  │    │  External Web   │
-│   (Docker only) │    │   (port 8000)   │
-└─────────────────┘    └─────────────────┘
-         │                       │
-         │                       │
-┌─────────────────────────────────────────┐
-│           Shared Network                │
-│  ┌─────────────────┐  ┌───────────────┐ │
-│  │  Devcontainer   │  │  Application  │ │
-│  │                 │  │     :8000     │ │
-│  └─────────────────┘  └───────────────┘ │
-└─────────────────────────────────────────┘
-         │                       │
-         │                       │
-┌─────────────────┐    ┌─────────────────┐
-│  Dev-Tools Net  │    │  App Network    │
-│   (internal)    │    │   (internal)    │
-│                 │    │                 │
-│ • SearxNG       │    │ • PostgreSQL    │
-│ • Crawl4AI      │    │ • Redis         │
-│ • Context7      │    │                 │
-│ • Redis/Valkey  │    │                 │
-└─────────────────┘    └─────────────────┘
+assert invoice_uuid == regenerated  # ✓ Always True!
 ```
 
-## Technology Stack
+**Core Principle**: `Same Input + Same Config = Same UUID, Every Time`
 
-### Development Environment
+## ✨ Features
 
-- **Base**: Python 3.12 slim container with VS Code Dev Containers
-- **Package Management**: FastAPI with standard pip (UV integration available)
-- **Container Runtime**: Docker-in-Docker for application stack management
+- **🔒 Secure**: Uses cryptographic salt to prevent UUID prediction
+- **🎯 Deterministic**: Same inputs always produce the same UUID
+- **🚀 Zero Coordination**: No service communication required
+- **📦 Simple API**: Functional-first with optional OO convenience
+- **🔧 Production Ready**: Type-safe, well-tested, documented
+- **🎨 CLI Included**: First-class command-line interface
+- **🐍 Modern Python**: Requires Python 3.11+
 
-### MCP (Model Context Protocol) Services
-
-- **SearxNG**: Self-hosted search engine for private web search
-- **Crawl4AI**: AI-powered web crawling and content extraction
-- **Context7**: Codebase documentation and context service
-- **Sequential Thinking**: Structured reasoning and analysis tools
-- **Serena**: IDE assistant for development workflows
-- **Memgraph**: Graph database with MAGE algorithms for complex data relationships
-- **Docker**: Container management and orchestration
-- **Playwright**: Browser automation and testing
-- **Magic**: UI component generation from 21st.dev
-
-### Application Services
-
-- **Web Framework**: FastAPI with Uvicorn server
-- **Database**: PostgreSQL 15 with isolated networking
-- **Caching**: Redis (separate from development Redis)
-
-## Core Design Principles
-
-### 1. No Custom Shell Scripts
-
-**Principle**: Use standard tooling without custom abstractions.
-
-**Rationale**: Shell scripts create opaque, brittle abstractions over standard tools. They become maintenance burdens and make debugging harder.
-
-**Implementation**: All operations use standard Docker Compose commands:
+## 📦 Installation
 
 ```bash
-# Start services
-docker compose up -d
+# With uv (recommended)
+uv add uuid-forge
 
-# View logs
-docker compose logs -f
+# With pip
+pip install uuid-forge
 
-# Execute commands
-docker compose exec service-name command
+# With all extras
+pip install uuid-forge[dev,docs]
 ```
 
-### 2. Network Isolation by Design
+## 🚀 Quick Start
 
-**Principle**: Each layer operates on isolated networks with explicit connectivity.
-
-**Networks**:
-
-- `dev-tools` (internal): MCP services isolated from external access
-- `shared`: Connects devcontainer and application for communication
-- `app-network` (internal): Application's private data services
-
-### 3. Configuration Over Code
-
-**Principle**: Declarative YAML configuration instead of imperative scripts.
-
-**Benefits**:
-
-- Version controlled configuration
-- Predictable behavior
-- Standard Docker Compose patterns
-- Easy to understand and modify
-
-### 4. Security Through Isolation
-
-**Principle**: Multiple layers of isolation prevent unauthorized access.
-
-**Implementation**:
-
-- Development services: No external ports, internal network only
-- Application data: Isolated to application containers only
-- Host access: Only application port 8000 exposed
-
-## Repository Structure
-
-```
-├── .devcontainer/
-│   ├── compose.yml              # Development services orchestration
-│   ├── devcontainer.json        # VS Code Dev Container configuration
-│   ├── Dockerfile               # Development environment image
-│   └── mcp/                     # MCP service configurations
-│       ├── crawl4ai/
-│       ├── searxng/
-│       ├── context7/
-│       └── memgraph-ai-toolkit/ # Memgraph MCP server (submodule)
-├── app/
-│   ├── compose.yml              # Application stack orchestration
-│   ├── Dockerfile               # Application container image
-│   ├── main.py                  # FastAPI application
-│   └── requirements.txt         # Python dependencies
-├── .mcp.json                    # MCP server configuration for Claude
-├── .gitmodules                  # Git submodules for MCP services
-└── README.md                    # This documentation
-```
-
-## Development Workflow
-
-### Initial Setup
-
-1. **Prerequisites**: Docker Desktop and VS Code with Dev Containers extension
-2. **Open Repository**: VS Code automatically detects and offers to open in container
-3. **Container Build**: First-time setup builds development environment (2-3 minutes)
-4. **Service Startup**: MCP services start automatically with health checks
-
-### Daily Development
+### 1. Generate a Salt (One Time Setup)
 
 ```bash
-# Services start automatically when opening devcontainer
+# Generate a secure salt
+uuid-forge new-salt
 
-# Start application stack
-cd app
-docker compose up -d
-
-# View application logs
-docker compose logs -f app
-
-# Access application shell
-docker compose exec app bash
-
-# Test MCP services (from devcontainer terminal)
-curl http://searxng:8080               # Search engine
-curl http://crawl4ai:11235             # AI web crawler
-nc -zv memgraph 7687                   # Memgraph database
-curl http://memgraph-lab:3000          # Memgraph Lab UI
+# Or initialize a config file
+uuid-forge init
 ```
 
-### Application Access
-
-- **From Host**: http://localhost:8000
-- **From Devcontainer**: http://app:8000
-- **Health Check**: http://localhost:8000/health
-
-## MCP Services Integration
-
-### SearxNG (Private Search)
-
-- **Purpose**: Self-hosted search engine for private web searches
-- **Access**: http://devenv-searxng:8080 (devcontainer only)
-- **Configuration**: Privacy-focused with no external tracking
-
-### Crawl4AI (Web Intelligence)
-
-- **Purpose**: AI-powered web crawling and content extraction
-- **Access**: http://devenv-crawl4ai:11235 (devcontainer only)
-- **Features**: LLM-powered content analysis and extraction
-
-### Context7 (Codebase Documentation)
-
-- **Purpose**: Automated codebase documentation and context
-- **Access**: http://devenv-mcp-context7:8080 (devcontainer only)
-- **Integration**: Provides repository context to AI assistants
-
-### Memgraph (Graph Database)
-
-- **Purpose**: Graph database with MAGE algorithms for complex data relationships
-- **Database Access**: bolt://memgraph:7687 (Bolt protocol)
-- **Web UI**: http://memgraph-lab:3000 (Visual graph exploration)
-- **Features**: Cypher queries, graph algorithms (PageRank, centrality), schema management
-
-## Security Model
-
-### Access Control Matrix
-
-| Service        | Host Access       | Devcontainer Access | App Container Access |
-| -------------- | ----------------- | ------------------- | -------------------- |
-| Application    | ✅ Port 8000      | ✅ http://app:8000  | N/A                  |
-| SearxNG        | ✅ Port 8080      | ✅ Internal network | ❌                   |
-| Crawl4AI       | ✅ Port 11235     | ✅ Internal network | ❌                   |
-| Context7       | ❌                | ✅ Internal network | ❌                   |
-| Memgraph       | ❌                | ✅ Internal network | ❌                   |
-| Memgraph Lab   | ✅ Port 3000      | ✅ Internal network | ❌                   |
-| App PostgreSQL | ❌                | ❌                  | ✅ Internal only     |
-| App Redis      | ❌           | ❌                  | ✅ Internal only     |
-
-### Security Boundaries
-
-1. **Host Isolation**: No development services accessible from host
-2. **Network Segmentation**: MCP services cannot access application data
-3. **Service Isolation**: Application data services isolated from development tools
-4. **Container Security**: Non-root users, minimal attack surface
-
-## Operational Commands
-
-### Service Management
+Add the generated salt to your environment:
 
 ```bash
-# View all running containers
-docker compose ps
-
-# Stop all services
-docker compose down
-
-# Restart specific service
-docker compose restart service-name
-
-# View service logs
-docker compose logs -f service-name
-
-# Execute commands in service
-docker compose exec service-name bash
+export UUID_FORGE_SALT='your-generated-salt-here'
 ```
 
-### Application Development
+### 2. Generate UUIDs
+
+```python
+from uuid_forge import generate_uuid_only, load_config_from_env
+
+# Load config from environment
+config = load_config_from_env()
+
+# Generate deterministic UUID
+user_uuid = generate_uuid_only(
+    "user",
+    config=config,
+    email="alice@example.com"
+)
+```
+
+### 3. Use Across All Systems
+
+```python
+# Postgres - UUID as primary key
+db.execute(
+    "INSERT INTO users (id, email) VALUES (%s, %s)",
+    (user_uuid, "alice@example.com")
+)
+
+# S3 - UUID in object key
+s3.put_object(
+    Bucket="users",
+    Key=f"profiles/{user_uuid}.json",
+    Body=profile_data
+)
+
+# Redis - UUID in cache key
+redis.set(f"user:{user_uuid}", user_data, ex=3600)
+
+# Later, regenerate UUID from business data - no lookup needed!
+uuid_from_data = generate_uuid_only(
+    "user",
+    config=config,
+    email="alice@example.com"
+)
+
+# All systems now accessible with the same UUID
+```
+
+## 📋 Use Cases
+
+### ✅ Perfect For:
+
+- **Microservices Architecture**: Multiple services need consistent IDs
+- **Multi-Storage Systems**: Postgres + S3 + Redis + QDrant + MinIO
+- **Zero-Coordination Design**: No central ID service required
+- **Deterministic Testing**: Reproducible IDs for test scenarios
+- **Data Migration**: Consistent IDs across old and new systems
+
+### ❌ Not Ideal For:
+
+- **Simple CRUD Apps**: Use database auto-increment
+- **Sequential IDs Required**: Use database sequences
+- **No Salt Available**: UUIDs become predictable (security risk)
+
+## 🔒 Security
+
+**CRITICAL**: Always use a salt in production!
+
+```python
+# ❌ INSECURE - UUIDs are predictable
+config = IDConfig()
+
+# ✅ SECURE - UUIDs are unpredictable
+config = IDConfig(salt=os.getenv("UUID_FORGE_SALT"))
+```
+
+Generate a secure salt:
 
 ```bash
-# Start application stack
-cd app && docker compose up -d
+uuid-forge new-salt
+```
 
-# Hot reload development
-cd app && docker compose up --watch
+Store it securely:
+- Environment variables
+- Secret management systems (AWS Secrets Manager, HashiCorp Vault, etc.)
+- **Never commit to version control**
+
+## 📖 Documentation
+
+Full documentation is available at: [https://yourusername.github.io/uuid-forge](https://yourusername.github.io/uuid-forge)
+
+- [Installation Guide](https://yourusername.github.io/uuid-forge/installation/)
+- [Quick Start Tutorial](https://yourusername.github.io/uuid-forge/quickstart/)
+- [API Reference](https://yourusername.github.io/uuid-forge/api/)
+- [Best Practices](https://yourusername.github.io/uuid-forge/best-practices/)
+- [Migration Guide](https://yourusername.github.io/uuid-forge/migration/)
+
+## 🛠️ CLI Usage
+
+UUID-Forge includes a comprehensive CLI:
+
+```bash
+# Generate UUID
+uuid-forge generate invoice --attr region=EUR --attr number=12345
+
+# With human-readable prefix
+uuid-forge generate invoice --prefix INV-EUR --attr region=EUR --attr number=12345
+
+# Extract UUID from prefixed ID
+uuid-forge extract "INV-EUR-550e8400-e29b-41d4-a716-446655440000"
+
+# Generate new salt
+uuid-forge new-salt
+
+# Initialize config file
+uuid-forge init
+
+# Validate configuration
+uuid-forge validate
+
+# Show current config
+uuid-forge info
+```
+
+## 🏗️ Architecture
+
+UUID-Forge uses **UUIDv5** (name-based, SHA-1) for deterministic generation:
+
+1. **Entity Type** provides logical separation ("invoice", "user", "order")
+2. **Business Data** uniquely identifies the entity (region, number, email, etc.)
+3. **Salt** adds security (prevents UUID prediction)
+4. **Namespace** provides additional isolation (optional)
+
+The combination is hashed to produce a UUID that's:
+- ✅ Deterministic (same inputs → same UUID)
+- ✅ Unique (different inputs → different UUIDs)
+- ✅ Secure (unpredictable with salt)
+- ✅ Standard (RFC 4122 compliant)
+
+## 🧪 Development
+
+```bash
+# Clone repository
+git clone https://github.com/yourusername/uuid-forge.git
+cd uuid-forge
+
+# Install with uv
+uv sync --all-extras
 
 # Run tests
-cd app && docker compose exec app python -m pytest
+pytest
 
-# Database access
-cd app && docker compose exec postgres psql -U appuser -d appdb
+# Run tests with coverage
+pytest --cov=uuid_forge --cov-report=html
+
+# Run linting
+ruff check src tests
+mypy src
+
+# Run all checks with nox
+nox
+
+# Build documentation
+cd docs
+mkdocs serve
 ```
 
-### Debugging and Troubleshooting
+## 📊 Project Stats
 
-```bash
-# Check service health
-docker compose ps
+- **Lines of Code**: ~300 (core), ~1000 (with tests)
+- **Test Coverage**: >80%
+- **Type Coverage**: 100%
+- **Dependencies**: Minimal (typer, rich for CLI)
 
-# Inspect networks
-docker network ls
-docker network inspect devcontainer_dev-tools
+## 🤝 Contributing
 
-# View resource usage
-docker stats
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
-# Clean up resources
-docker system prune -f
-```
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes with tests
+4. Ensure tests pass and coverage remains >80%
+5. Submit a pull request
 
-## Development Patterns
+## 📄 License
 
-### Adding MCP Services
+MIT License - see [LICENSE](LICENSE) for details.
 
-1. Add service to `.devcontainer/compose.yml` on `dev-tools` network
-2. Configure in `.mcp.json` for Claude integration
-3. Use `expose` not `ports` to maintain isolation
-4. Add health checks for reliable startup
+## 🙏 Acknowledgments
 
-### Scaling Application Services
+- Inspired by the need for zero-coordination microservices
+- Built with modern Python best practices
+- Follows PEP-8, uses strict typing, and comprehensive testing
 
-1. Add services to `app/compose.yml` on `app-network`
-2. Use internal networking for data services
-3. Only expose application ports to `shared` network
-4. Maintain database isolation principles
+## 📮 Contact
 
-### Environment Configuration
-
-- **Development**: Service discovery via Docker DNS
-- **Production**: External service configuration
-- **Testing**: Isolated test databases and services
-
-## Benefits and Trade-offs
-
-### Benefits
-
-- **Security**: Multiple isolation layers prevent unauthorized access
-- **Consistency**: Identical environments across all developers
-- **Productivity**: Rich AI assistance through MCP services
-- **Maintainability**: Standard tools, no custom scripts
-- **Scalability**: Easy to add services or team members
-
-### Trade-offs
-
-- **Complexity**: Multi-network setup requires Docker knowledge
-- **Resources**: Multiple containers consume more system resources
-- **Startup Time**: Initial container builds take 2-3 minutes
-- **Platform Dependency**: Requires Docker Desktop and VS Code
-
-## Future Enhancements
-
-### Planned Improvements
-
-- **UV Integration**: Faster Python dependency management
-- **Multi-stage Builds**: Optimized container images
-- **Health Dashboards**: Service monitoring and alerting
-- **CI/CD Integration**: Automated testing and deployment
-
-### Extension Points
-
-- **Additional MCP Services**: Easy to add new AI tools
-- **Database Options**: Support for MongoDB, MySQL, etc.
-- **Language Support**: Extend to other development stacks
-- **Cloud Integration**: Deployment to container orchestration platforms
-
-## Contributing and Customization
-
-### Customizing for Your Needs
-
-1. **Fork the repository** and modify service configurations
-2. **Add your MCP services** to the dev-tools network
-3. **Configure your application stack** in the app directory
-4. **Update .mcp.json** for Claude integration
-
-### Best Practices
-
-- Maintain network isolation principles
-- Use standard Docker Compose patterns
-- Document any custom configurations
-- Test across platforms (Windows, macOS, Linux)
+- **Issues**: [GitHub Issues](https://github.com/yourusername/uuid-forge/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/uuid-forge/discussions)
+- **Email**: your.email@example.com
 
 ---
 
-**This repository represents a production-ready approach to containerized development that prioritizes security, maintainability, and developer experience while avoiding the complexity and brittleness of custom shell scripts.**
+**Made with ❤️ for developers who value simplicity and determinism**

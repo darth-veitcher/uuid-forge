@@ -1,0 +1,136 @@
+site_name: UUID-Forge Documentation
+site_description: Deterministic UUID generation for cross-system coordination
+site_author: Your Name
+site_url: https://yourusername.github.io/uuid-forge
+repo_url: https://github.com/yourusername/uuid-forge
+repo_name: yourusername/uuid-forge
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search:
+      lang: en
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            docstring_section_style: table
+            show_root_heading: true
+            show_source: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            signature_crossrefs: true
+            separate_signature: true
+            line_length: 80
+            merge_init_into_class: true
+            show_if_no_docstring: false
+            members_order: source
+            group_by_category: true
+            show_category_heading: true
+            summary: true
+  - mike:
+      version_selector: true
+      css_dir: css
+      javascript_dir: js
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+    - Configuration: getting-started/configuration.md
+  - User Guide:
+    - Core Concepts: guide/concepts.md
+    - Basic Usage: guide/basic-usage.md
+    - Advanced Usage: guide/advanced-usage.md
+    - CLI Reference: guide/cli.md
+    - Best Practices: guide/best-practices.md
+  - Use Cases:
+    - Microservices: use-cases/microservices.md
+    - Multi-Storage: use-cases/multi-storage.md
+    - Testing: use-cases/testing.md
+    - Migration: use-cases/migration.md
+  - API Reference:
+    - Core: api/core.md
+    - Config: api/config.md
+    - CLI: api/cli.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Development Setup: development/setup.md
+    - Testing: development/testing.md
+    - Release Process: development/release.md
+  - About:
+    - Changelog: about/changelog.md
+    - License: about/license.md
+
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yourusername/uuid-forge
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/uuid-forge/
+
+copyright: Copyright &copy; 2024 Darth Veitcher. All rights reserved.

@@ -1,0 +1,67 @@
+services:
+  uuid-forge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: uuid-forge:latest
+    container_name: uuid-forge
+    environment:
+      - UUID_FORGE_SALT=${UUID_FORGE_SALT:-}
+      - UUID_FORGE_NAMESPACE=${UUID_FORGE_NAMESPACE:-}
+    volumes:
+      - ./output:/home/appuser/output
+    command: ["info"]
+
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    image: uuid-forge:dev
+    container_name: uuid-forge-dev
+    environment:
+      - UUID_FORGE_SALT=${UUID_FORGE_SALT:-development-salt-change-in-production}
+      - UUID_FORGE_NAMESPACE=${UUID_FORGE_NAMESPACE:-dev.localhost}
+    volumes:
+      - .:/app
+      - uv-cache:/root/.cache/uv
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    command: ["/bin/bash"]
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    image: uuid-forge:dev
+    container_name: uuid-forge-test
+    environment:
+      - UUID_FORGE_SALT=test-salt-for-ci
+      - UUID_FORGE_NAMESPACE=test.localhost
+    volumes:
+      - .:/app
+      - uv-cache:/root/.cache/uv
+    working_dir: /app
+    command: ["uuid-forge", "test"]
+
+  docs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    image: uuid-forge:dev
+    container_name: uuid-forge-docs
+    volumes:
+      - .:/app
+      - uv-cache:/root/.cache/uv
+    working_dir: /app
+    ports:
+      - "8881:8000"
+    command: ["uuid-forge", "docs", "--host", "0.0.0.0"]
+
+volumes:
+  uv-cache:
+    driver: local
