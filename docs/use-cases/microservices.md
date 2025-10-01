@@ -21,12 +21,10 @@ Each service uses its own namespace for entity isolation:
 
 ```python
 # User Service
-from uuid_forge import UUIDForge
-import uuid
-
+from uuid_forge import UUIDGenerator
 # Service-specific namespace
-USER_SERVICE_NS = uuid.uuid5(uuid.NAMESPACE_DNS, "user-service.mycompany.com")
-user_forge = UUIDForge(namespace=USER_SERVICE_NS)
+USER_SERVICE_NS = Namespace("user-service.mycompany.com")
+user_forge = UUIDGenerator(namespace=USER_SERVICE_NS)
 
 class UserService:
     def create_user(self, email, name):
@@ -39,8 +37,8 @@ class UserService:
 
 ```python
 # Order Service
-ORDER_SERVICE_NS = uuid.uuid5(uuid.NAMESPACE_DNS, "order-service.mycompany.com")
-order_forge = UUIDForge(namespace=ORDER_SERVICE_NS)
+ORDER_SERVICE_NS = Namespace("order-service.mycompany.com")
+order_forge = UUIDGenerator(namespace=ORDER_SERVICE_NS)
 
 class OrderService:
     def create_order(self, user_email, items):
@@ -65,10 +63,8 @@ class OrderService:
 Create namespaces based on entity types:
 
 ```python
-import uuid
-
 # Root namespace for the organization
-ROOT_NS = uuid.uuid5(uuid.NAMESPACE_DNS, "mycompany.com")
+ROOT_NS = Namespace("mycompany.com")
 
 # Entity-specific namespaces
 USERS_NS = uuid.uuid5(ROOT_NS, "users")
@@ -76,9 +72,9 @@ ORDERS_NS = uuid.uuid5(ROOT_NS, "orders")
 PRODUCTS_NS = uuid.uuid5(ROOT_NS, "products")
 
 # Shared forge instances
-user_forge = UUIDForge(namespace=USERS_NS)
-order_forge = UUIDForge(namespace=ORDERS_NS)
-product_forge = UUIDForge(namespace=PRODUCTS_NS)
+user_forge = UUIDGenerator(namespace=USERS_NS)
+order_forge = UUIDGenerator(namespace=ORDERS_NS)
+product_forge = UUIDGenerator(namespace=PRODUCTS_NS)
 
 # Any service can generate consistent entity UUIDs
 def get_user_uuid(email):
@@ -95,7 +91,7 @@ def get_product_uuid(sku):
 ```python
 class UserManagementService:
     def __init__(self):
-        self.user_forge = UUIDForge(namespace=USERS_NS)
+        self.user_forge = UUIDGenerator(namespace=USERS_NS)
 
     def register_user(self, email, profile_data):
         user_id = self.user_forge.generate(email)
@@ -128,9 +124,9 @@ class UserManagementService:
 ```python
 class OrderProcessingService:
     def __init__(self):
-        self.user_forge = UUIDForge(namespace=USERS_NS)
-        self.order_forge = UUIDForge(namespace=ORDERS_NS)
-        self.product_forge = UUIDForge(namespace=PRODUCTS_NS)
+        self.user_forge = UUIDGenerator(namespace=USERS_NS)
+        self.order_forge = UUIDGenerator(namespace=ORDERS_NS)
+        self.product_forge = UUIDGenerator(namespace=PRODUCTS_NS)
 
     def create_order(self, user_email, product_skus, quantities):
         # Generate consistent IDs
@@ -178,8 +174,8 @@ class OrderProcessingService:
 ```python
 class NotificationService:
     def __init__(self):
-        self.user_forge = UUIDForge(namespace=USERS_NS)
-        self.notification_forge = UUIDForge(namespace=NOTIFICATIONS_NS)
+        self.user_forge = UUIDGenerator(namespace=USERS_NS)
+        self.notification_forge = UUIDGenerator(namespace=NOTIFICATIONS_NS)
 
     def handle_order_created(self, event_data):
         user_id = event_data["user_id"]
@@ -212,7 +208,7 @@ Use deterministic UUIDs for event correlation:
 ```python
 class EventService:
     def __init__(self):
-        self.event_forge = UUIDForge(namespace="events")
+        self.event_forge = UUIDGenerator(namespace="events")
 
     def create_correlation_id(self, user_id, action, timestamp):
         """Create deterministic correlation ID for event tracing"""
@@ -241,9 +237,9 @@ class EventService:
 ```python
 class SagaOrchestrator:
     def __init__(self):
-        self.saga_forge = UUIDForge(namespace="sagas")
-        self.user_forge = UUIDForge(namespace=USERS_NS)
-        self.order_forge = UUIDForge(namespace=ORDERS_NS)
+        self.saga_forge = UUIDGenerator(namespace="sagas")
+        self.user_forge = UUIDGenerator(namespace=USERS_NS)
+        self.order_forge = UUIDGenerator(namespace=ORDERS_NS)
 
     def start_order_saga(self, user_email, order_data):
         user_id = self.user_forge.generate(user_email)
@@ -276,7 +272,7 @@ class SagaOrchestrator:
 ```python
 class APIGateway:
     def __init__(self):
-        self.trace_forge = UUIDForge(namespace="traces")
+        self.trace_forge = UUIDGenerator(namespace="traces")
 
     def create_trace_id(self, request):
         """Create deterministic trace ID for request tracking"""
@@ -301,8 +297,8 @@ class APIGateway:
 ```python
 class ReportingService:
     def __init__(self):
-        self.user_forge = UUIDForge(namespace=USERS_NS)
-        self.order_forge = UUIDForge(namespace=ORDERS_NS)
+        self.user_forge = UUIDGenerator(namespace=USERS_NS)
+        self.order_forge = UUIDGenerator(namespace=ORDERS_NS)
 
     def generate_user_order_report(self, user_email):
         user_id = self.user_forge.generate(user_email)
@@ -367,7 +363,7 @@ import logging
 class UUIDTracker:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.user_forge = UUIDForge(namespace=USERS_NS)
+        self.user_forge = UUIDGenerator(namespace=USERS_NS)
 
     def track_uuid_usage(self, service_name, entity_type, input_data, uuid_result):
         """Track UUID generation for debugging and monitoring"""

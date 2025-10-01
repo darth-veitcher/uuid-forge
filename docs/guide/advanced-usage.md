@@ -7,19 +7,19 @@ Explore the advanced features and customization options of UUID-Forge for comple
 ### Creating Namespace Hierarchies
 
 ```python
-from uuid_forge import UUIDForge
+from uuid_forge import UUIDGenerator
 import uuid
 
 # Create a root namespace for your organization
-org_namespace = uuid.uuid5(uuid.NAMESPACE_DNS, "mycompany.com")
+org_namespace = Namespace("mycompany.com")
 
 # Create service-specific namespaces
 user_service_ns = uuid.uuid5(org_namespace, "user-service")
 order_service_ns = uuid.uuid5(org_namespace, "order-service")
 
 # Use hierarchical namespaces
-user_forge = UUIDForge(namespace=user_service_ns)
-order_forge = UUIDForge(namespace=order_service_ns)
+user_forge = UUIDGenerator(namespace=user_service_ns)
+order_forge = UUIDGenerator(namespace=order_service_ns)
 ```
 
 ### Namespace Factories
@@ -82,7 +82,7 @@ class CustomEncoder(json.JSONEncoder):
         return super().default(obj)
 
 # Use custom serialization for consistent UUIDs
-forge = UUIDForge(json_encoder=CustomEncoder)
+forge = UUIDGenerator(json_encoder=CustomEncoder)
 ```
 
 ## Performance Optimization
@@ -92,7 +92,7 @@ forge = UUIDForge(json_encoder=CustomEncoder)
 ```python
 # Efficient batch processing
 def process_batch(items, namespace="default"):
-    forge = UUIDForge(namespace=namespace)
+    forge = UUIDGenerator(namespace=namespace)
     return [(item, forge.generate(item)) for item in items]
 
 # Process large datasets
@@ -105,16 +105,16 @@ results = process_batch(large_dataset)
 ```python
 from functools import lru_cache
 
-class CachedUUIDForge:
+class CachedUUIDGenerator:
     def __init__(self, namespace=None):
-        self.forge = UUIDForge(namespace=namespace)
+        self.forge = UUIDGenerator(namespace=namespace)
 
     @lru_cache(maxsize=1000)
     def generate_cached(self, input_data):
         return self.forge.generate(input_data)
 
 # Use cached version for frequently accessed items
-cached_forge = CachedUUIDForge()
+cached_forge = CachedUUIDGenerator()
 ```
 
 ## Multi-Version Support
@@ -123,9 +123,9 @@ cached_forge = CachedUUIDForge()
 
 ```python
 # Different UUID versions for different use cases
-v3_forge = UUIDForge(version=3)  # MD5-based
-v4_forge = UUIDForge(version=4)  # Random
-v5_forge = UUIDForge(version=5)  # SHA-1-based (recommended)
+v3_forge = UUIDGenerator(version=3)  # MD5-based
+v4_forge = UUIDGenerator(version=4)  # Random
+v5_forge = UUIDGenerator(version=5)  # SHA-1-based (recommended)
 
 # Same input, different versions
 input_data = "test@example.com"
@@ -139,8 +139,8 @@ uuid_v5 = v5_forge.generate(input_data)
 ```python
 def migrate_uuids(old_items, old_version=3, new_version=5):
     """Migrate UUIDs from one version to another"""
-    old_forge = UUIDForge(version=old_version)
-    new_forge = UUIDForge(version=new_version)
+    old_forge = UUIDGenerator(version=old_version)
+    new_forge = UUIDGenerator(version=new_version)
 
     migrations = {}
     for item in old_items:
@@ -167,7 +167,7 @@ class CustomProcessor:
             return str(obj)
 
 # Register custom processor
-forge = UUIDForge(object_processor=CustomProcessor.process_object)
+forge = UUIDGenerator(object_processor=CustomProcessor.process_object)
 ```
 
 ## Integration Patterns
@@ -190,7 +190,7 @@ class User(Base):
     def __init__(self, email):
         self.email = email
         # Generate deterministic UUID from email
-        forge = UUIDForge(namespace="users")
+        forge = UUIDGenerator(namespace="users")
         self.id = uuid.UUID(forge.generate(email))
 
 # Usage
@@ -202,11 +202,11 @@ user = User("john@example.com")
 
 ```python
 import json
-from uuid_forge import UUIDForge
+from uuid_forge import UUIDGenerator
 
 class MessageHandler:
     def __init__(self):
-        self.forge = UUIDForge(namespace="messages")
+        self.forge = UUIDGenerator(namespace="messages")
 
     def create_message(self, data):
         # Create deterministic message ID
@@ -229,16 +229,16 @@ class MessageHandler:
 
 ```python
 import os
-from uuid_forge import UUIDForge, Config
+from uuid_forge import UUIDGenerator, IDConfig
 
 def create_forge_from_env():
-    config = Config(
+    config = IDConfig(
         namespace=os.getenv('UUID_NAMESPACE', 'default'),
         version=int(os.getenv('UUID_VERSION', '5')),
         format=os.getenv('UUID_FORMAT', 'hex'),
         case=os.getenv('UUID_CASE', 'lower')
     )
-    return UUIDForge(config)
+    return UUIDGenerator(config)
 
 # Use environment-specific configuration
 forge = create_forge_from_env()

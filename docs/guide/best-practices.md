@@ -10,7 +10,7 @@ Use UUID version 5 for most deterministic use cases:
 
 ```python
 # Recommended for production
-forge = UUIDForge(version=5)
+forge = UUIDGenerator(version=5)
 ```
 
 **Benefits:**
@@ -25,7 +25,7 @@ Only use version 3 when maintaining compatibility:
 
 ```python
 # Only for legacy compatibility
-forge = UUIDForge(version=3)
+forge = UUIDGenerator(version=3)
 ```
 
 **Limitations:**
@@ -39,7 +39,7 @@ Use for non-deterministic requirements:
 
 ```python
 # For truly random UUIDs
-forge = UUIDForge(version=4)
+forge = UUIDGenerator(version=4)
 ```
 
 ## Namespace Design
@@ -52,7 +52,7 @@ Design namespaces hierarchically for better organization:
 import uuid
 
 # Root namespace for your organization
-ROOT_NS = uuid.uuid5(uuid.NAMESPACE_DNS, "mycompany.com")
+ROOT_NS = Namespace("mycompany.com")
 
 # Service-specific namespaces
 USER_SERVICE_NS = uuid.uuid5(ROOT_NS, "user-service")
@@ -129,14 +129,14 @@ Create forge instances once and reuse them:
 # Good: Reuse instances
 class UserService:
     def __init__(self):
-        self.user_forge = UUIDForge(namespace="users")
+        self.user_forge = UUIDGenerator(namespace="users")
 
     def create_user_uuid(self, user_data):
         return self.user_forge.generate(user_data)
 
 # Avoid: Creating new instances repeatedly
 def create_user_uuid(user_data):
-    forge = UUIDForge(namespace="users")  # Inefficient
+    forge = UUIDGenerator(namespace="users")  # Inefficient
     return forge.generate(user_data)
 ```
 
@@ -147,7 +147,7 @@ Process multiple items efficiently:
 ```python
 def process_users_batch(users):
     """Process multiple users efficiently"""
-    forge = UUIDForge(namespace="users")
+    forge = UUIDGenerator(namespace="users")
     return [
         {
             "uuid": forge.generate(user),
@@ -166,7 +166,7 @@ from functools import lru_cache
 
 class UUIDService:
     def __init__(self):
-        self.forge = UUIDForge(namespace="default")
+        self.forge = UUIDGenerator(namespace="default")
 
     @lru_cache(maxsize=1000)
     def get_cached_uuid(self, input_key):
@@ -224,7 +224,7 @@ Leverage determinism for better tests:
 ```python
 def test_user_uuid_generation():
     """Test that UUID generation is deterministic"""
-    forge = UUIDForge(namespace="test-users")
+    forge = UUIDGenerator(namespace="test-users")
 
     user_data = {"email": "test@example.com", "name": "Test User"}
 
@@ -255,7 +255,7 @@ TEST_NAMESPACE = "test-environment"
 
 def test_batch_uuid_generation():
     """Test batch UUID generation"""
-    forge = UUIDForge(namespace=TEST_NAMESPACE)
+    forge = UUIDGenerator(namespace=TEST_NAMESPACE)
 
     uuids = [forge.generate(user) for user in TEST_USERS]
 
@@ -275,16 +275,16 @@ Use environment-specific configuration:
 
 ```python
 import os
-from uuid_forge import UUIDForge, Config
+from uuid_forge import UUIDGenerator, IDConfig
 
 def create_production_forge():
     """Create forge with production configuration"""
-    config = Config(
+    config = IDConfig(
         namespace=os.environ["UUID_NAMESPACE"],
         version=int(os.environ.get("UUID_VERSION", "5")),
         format=os.environ.get("UUID_FORMAT", "hex")
     )
-    return UUIDForge(config)
+    return UUIDGenerator(config)
 ```
 
 ### Monitoring and Logging
@@ -297,9 +297,9 @@ import time
 
 logger = logging.getLogger(__name__)
 
-class MonitoredUUIDForge:
+class MonitoredUUIDGenerator:
     def __init__(self, namespace=None):
-        self.forge = UUIDForge(namespace=namespace)
+        self.forge = UUIDGenerator(namespace=namespace)
         self.generation_count = 0
 
     def generate(self, input_data):
@@ -357,7 +357,7 @@ def generate_context_uuid(data, context):
         "admin": ADMIN_NS
     }
 
-    forge = UUIDForge(namespace=namespaces[context])
+    forge = UUIDGenerator(namespace=namespaces[context])
     return forge.generate(data)
 ```
 
@@ -370,8 +370,8 @@ Plan for UUID version migrations:
 ```python
 class UUIDMigrationService:
     def __init__(self):
-        self.old_forge = UUIDForge(version=3)  # Legacy
-        self.new_forge = UUIDForge(version=5)  # New
+        self.old_forge = UUIDGenerator(version=3)  # Legacy
+        self.new_forge = UUIDGenerator(version=5)  # New
 
     def migrate_uuid(self, input_data):
         """Migrate from old to new UUID version"""
@@ -401,7 +401,7 @@ uuid2 = forge.generate("user@example.com")
 ```python
 # Don't do this - inefficient
 def get_user_uuid(user_email):
-    forge = UUIDForge(namespace="users")  # Creates new instance every time
+    forge = UUIDGenerator(namespace="users")  # Creates new instance every time
     return forge.generate(user_email)
 ```
 
@@ -409,8 +409,8 @@ def get_user_uuid(user_email):
 
 ```python
 # Don't do this - inconsistent versioning
-user_uuid_v3 = UUIDForge(version=3).generate(user_data)
-user_uuid_v5 = UUIDForge(version=5).generate(user_data)
+user_uuid_v3 = UUIDGenerator(version=3).generate(user_data)
+user_uuid_v5 = UUIDGenerator(version=5).generate(user_data)
 # These will be different UUIDs for the same user!
 ```
 

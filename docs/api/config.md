@@ -1,4 +1,4 @@
-# Config API Reference
+# IDConfig API Reference
 
 Complete reference for UUID-Forge configuration system.
 
@@ -124,15 +124,15 @@ Configuration via environment variables:
 ### Basic Configuration
 
 ```python
-from uuid_forge import Config, UUIDForge
+from uuid_forge import IDConfig, UUIDGenerator
 
 # Simple configuration
-config = Config(
+config = IDConfig(
     namespace="my-app",
     version=5
 )
 
-forge = UUIDForge(config)
+forge = UUIDGenerator(config)
 uuid_result = forge.generate("test")
 ```
 
@@ -148,7 +148,7 @@ class CustomJSONEncoder(json.JSONEncoder):
             return obj.isoformat()
         return super().default(obj)
 
-config = Config(
+config = IDConfig(
     namespace="advanced-app",
     version=5,
     format="hex",
@@ -157,7 +157,7 @@ config = Config(
     json_encoder=CustomJSONEncoder
 )
 
-forge = UUIDForge(config)
+forge = UUIDGenerator(config)
 ```
 
 ### Environment-Specific Configuration
@@ -169,13 +169,13 @@ def create_config():
     env = os.getenv("ENVIRONMENT", "development")
 
     if env == "production":
-        return Config(
+        return IDConfig(
             namespace="prod-app",
             version=5,
             format="hex"
         )
     else:
-        return Config(
+        return IDConfig(
             namespace="dev-app",
             version=5,
             format="hex",
@@ -183,26 +183,26 @@ def create_config():
         )
 
 config = create_config()
-forge = UUIDForge(config)
+forge = UUIDGenerator(config)
 ```
 
 ### Configuration Inheritance
 
 ```python
 # Base configuration
-base_config = Config(
+base_config = IDConfig(
     version=5,
     format="hex",
     case="lower"
 )
 
 # Service-specific configurations
-user_config = Config(
+user_config = IDConfig(
     namespace="users",
     **base_config.to_dict()
 )
 
-order_config = Config(
+order_config = IDConfig(
     namespace="orders",
     **base_config.to_dict()
 )
@@ -237,7 +237,7 @@ order_config = Config(
 
 Configuration is loaded in order of precedence:
 
-1. **Explicit parameters** - Passed to `Config()` constructor
+1. **Explicit parameters** - Passed to `IDConfig()` constructor
 2. **Configuration file** - Loaded from file path
 3. **Environment variables** - System environment
 4. **Default values** - Built-in defaults
@@ -245,10 +245,10 @@ Configuration is loaded in order of precedence:
 ## Error Handling
 
 ```python
-from uuid_forge.config import Config, ConfigError
+from uuid_forge.config import IDConfig, ConfigError
 
 try:
-    config = Config.load_from_file("invalid_config.yaml")
+    config = IDConfig.load_from_file("invalid_config.yaml")
 except ConfigError as e:
     print(f"Configuration error: {e}")
 except FileNotFoundError:
@@ -275,7 +275,7 @@ def migrate_config_v1_to_v2(old_config_dict):
         if old_key in old_config_dict:
             new_config[new_key] = old_config_dict[old_key]
 
-    return Config(**new_config)
+    return IDConfig(**new_config)
 ```
 
 ### Backward Compatibility
@@ -284,13 +284,13 @@ UUID-Forge maintains backward compatibility for configuration:
 
 ```python
 # Old style (still supported)
-config = Config(
+config = IDConfig(
     uuid_namespace="my-app",  # Deprecated
     uuid_version=5           # Deprecated
 )
 
 # New style (recommended)
-config = Config(
+config = IDConfig(
     namespace="my-app",
     version=5
 )
@@ -300,32 +300,32 @@ config = Config(
 
 ```python
 import pytest
-from uuid_forge.config import Config
+from uuid_forge.config import IDConfig
 
 def test_config_validation():
     """Test configuration validation"""
     # Valid configuration
-    config = Config(namespace="test", version=5)
+    config = IDConfig(namespace="test", version=5)
     assert config.namespace == "test"
     assert config.version == 5
 
     # Invalid version
     with pytest.raises(ValueError):
-        Config(version=99)
+        IDConfig(version=99)
 
     # Invalid format
     with pytest.raises(ValueError):
-        Config(format="invalid")
+        IDConfig(format="invalid")
 
 def test_config_loading():
     """Test configuration loading from various sources"""
     # From dict
     config_dict = {"namespace": "test", "version": 5}
-    config = Config(**config_dict)
+    config = IDConfig(**config_dict)
 
     # From environment (mock)
     import os
     os.environ["UUID_FORGE_NAMESPACE"] = "env-test"
-    config = Config.load_from_env()
+    config = IDConfig.load_from_env()
     assert config.namespace == "env-test"
 ```

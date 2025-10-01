@@ -56,10 +56,10 @@ export UUID_FORGE_FORMAT="hex"
 ## Programmatic Configuration
 
 ```python
-from uuid_forge import UUIDForge, Config
+from uuid_forge import UUIDGenerator, IDConfig
 
 # Create configuration
-config = Config(
+config = IDConfig(
     namespace="my-application",
     version=5,
     format="hex",
@@ -67,10 +67,10 @@ config = Config(
 )
 
 # Initialize with configuration
-forge = UUIDForge(config)
+forge = UUIDGenerator(config)
 
 # Or use default configuration
-forge = UUIDForge()
+forge = UUIDGenerator()
 ```
 
 ## Configuration Validation

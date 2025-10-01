@@ -5,10 +5,10 @@ This guide covers the fundamental ways to use UUID-Forge in your applications.
 ## Quick Start
 
 ```python
-from uuid_forge import UUIDForge
+from uuid_forge import UUIDGenerator
 
 # Create a forge instance
-forge = UUIDForge()
+forge = UUIDGenerator()
 
 # Generate a UUID from a string
 user_id = forge.generate("john.doe@example.com")
@@ -89,8 +89,8 @@ uuid_plain = forge.generate("test", format="hex", separator="")
 
 ```python
 # Different namespaces produce different UUIDs for same input
-forge_users = UUIDForge(namespace="users")
-forge_orders = UUIDForge(namespace="orders")
+forge_users = UUIDGenerator(namespace="users")
+forge_orders = UUIDGenerator(namespace="orders")
 
 user_uuid = forge_users.generate("john@example.com")
 order_uuid = forge_orders.generate("john@example.com")
@@ -113,7 +113,7 @@ uuids = [forge.generate(email) for email in emails]
 # Or with custom namespace per UUID
 namespaces = ["users", "admins", "guests"]
 uuids = [
-    UUIDForge(namespace=ns).generate(email)
+    UUIDGenerator(namespace=ns).generate(email)
     for ns, email in zip(namespaces, emails)
 ]
 ```
