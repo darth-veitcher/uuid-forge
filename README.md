@@ -607,6 +607,7 @@ For detailed documentation, tutorials, and examples, visit:
 **🌐 [https://darth-veitcher.github.io/uuid-forge](https://darth-veitcher.github.io/uuid-forge)**
 
 The documentation includes:
+
 - Comprehensive guides and tutorials
 - Real-world use case examples
 - Complete API reference
