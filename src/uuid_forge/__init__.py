@@ -67,6 +67,9 @@ Configuration from Environment:
 See https://github.com/yourusername/uuid-forge for full documentation.
 """
 
+# Re-export UUID types and functions for convenience (avoids need for separate uuid import)
+from uuid import NAMESPACE_DNS, UUID, uuid5
+
 from uuid_forge.config import (
     get_default_config,
     init_config_file,
@@ -75,6 +78,7 @@ from uuid_forge.config import (
 )
 from uuid_forge.core import (
     IDConfig,
+    Namespace,
     Representable,
     UUIDGenerator,
     extract_uuid_from_prefixed,
@@ -98,6 +102,7 @@ __all__ = [
     "generate_salt",
     # Configuration
     "IDConfig",
+    "Namespace",
     "load_config_from_env",
     "get_default_config",
     "init_config_file",
@@ -106,6 +111,10 @@ __all__ = [
     "UUIDGenerator",
     # Protocols
     "Representable",
+    # Types and functions (re-exported for convenience)
+    "UUID",
+    "uuid5",
+    "NAMESPACE_DNS",
     # Version
     "__version__",
 ]

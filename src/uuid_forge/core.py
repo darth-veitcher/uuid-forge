@@ -26,6 +26,64 @@ class Representable(Protocol):
         ...
 
 
+class Namespace:
+    """A UUID namespace for logical separation of entity types.
+
+    Provides a clean, simple way to create UUID namespaces without exposing
+    the underlying uuid module complexity. Most users just need domain-based
+    namespaces, so this class encapsulates that common pattern.
+
+    Examples:
+        ```python
+        from uuid_forge import Namespace, IDConfig, UUIDGenerator
+
+        # Simple domain-based namespace
+        ns = Namespace("mycompany.com")
+
+        # Service-specific namespace
+        ns = Namespace("users.mycompany.com")
+
+        # Multi-tenant namespace
+        ns = Namespace(f"tenant-{tenant_id}.mycompany.com")
+
+        # Use in configuration
+        config = IDConfig(namespace=ns, salt="your-salt")
+        ```
+    """
+
+    def __init__(self, domain: str):
+        """Create a namespace from a domain name.
+
+        Args:
+            domain: Domain name to create namespace from (e.g., "mycompany.com")
+        """
+        self.domain = domain
+        self._uuid = uuid_module.uuid5(uuid_module.NAMESPACE_DNS, domain)
+
+    @property
+    def uuid(self) -> uuid_module.UUID:
+        """Get the underlying UUID for this namespace."""
+        return self._uuid
+
+    def __str__(self) -> str:
+        """String representation shows the domain."""
+        return f"Namespace({self.domain})"
+
+    def __repr__(self) -> str:
+        """Detailed representation."""
+        return f"Namespace(domain='{self.domain}', uuid='{self._uuid}')"
+
+    def __eq__(self, other: object) -> bool:
+        """Two namespaces are equal if they have the same domain."""
+        if isinstance(other, Namespace):
+            return self.domain == other.domain
+        return False
+
+    def __hash__(self) -> int:
+        """Hash based on domain for use in sets/dicts."""
+        return hash(self.domain)
+
+
 @dataclass(frozen=True)
 class IDConfig:
     """Configuration for deterministic UUID generation.
@@ -36,20 +94,25 @@ class IDConfig:
     security by preventing UUID prediction attacks.
 
     Attributes:
-        namespace: UUID namespace for generation. Defaults to DNS-based namespace.
-            Use uuid.uuid5(uuid.NAMESPACE_DNS, "your-domain.com") for custom namespaces.
+        namespace: UUID namespace for generation. Can be a UUID object or a Namespace.
+            Defaults to DNS-based namespace. For custom namespaces, use Namespace("domain.com").
         salt: Random salt for security. CRITICAL: Keep this secret! Generate once
             per deployment and store securely in environment variables. Without a salt,
             UUIDs are predictable, which may be a security risk.
 
-    Example:
+    Examples:
         ```python
-        import uuid
-        from uuid_forge.core import IDConfig
+        from uuid_forge.core import IDConfig, Namespace
 
-        # Production config with salt
+        # Simple domain-based namespace
         config = IDConfig(
-            namespace=uuid.uuid5(uuid.NAMESPACE_DNS, "mycompany.com"),
+            namespace=Namespace("mycompany.com"),
+            salt="xvW9Kz_kRzPmNqYvTaWcXdYeFgZhAiB"
+        )
+
+        # Service-specific namespace
+        config = IDConfig(
+            namespace=Namespace("users.mycompany.com"),
             salt="xvW9Kz_kRzPmNqYvTaWcXdYeFgZhAiB"
         )
         ```
@@ -69,13 +132,22 @@ class IDConfig:
         FrozenInstanceError: cannot assign to field 'salt'
     """
 
-    namespace: uuid_module.UUID = uuid_module.NAMESPACE_DNS
+    namespace: uuid_module.UUID | Namespace = uuid_module.NAMESPACE_DNS
     salt: str = ""
 
     def __post_init__(self) -> None:
         """Validate configuration after initialization."""
-        if not isinstance(self.namespace, uuid_module.UUID):
-            raise TypeError(f"namespace must be a UUID, got {type(self.namespace).__name__}")
+        if not isinstance(self.namespace, uuid_module.UUID | Namespace):
+            raise TypeError(
+                f"namespace must be a UUID or Namespace, got {type(self.namespace).__name__}"
+            )
+
+    @property
+    def namespace_uuid(self) -> uuid_module.UUID:
+        """Get the UUID representation of the namespace."""
+        if isinstance(self.namespace, Namespace):
+            return self.namespace.uuid
+        return self.namespace
 
 
 def generate_salt(length: int = 32) -> str:
@@ -299,7 +371,7 @@ def generate_uuid_only(
     name = "|".join(parts)
 
     # Generate deterministic UUID
-    return uuid_module.uuid5(config.namespace, name)
+    return uuid_module.uuid5(config.namespace_uuid, name)
 
 
 def generate_uuid_with_prefix(

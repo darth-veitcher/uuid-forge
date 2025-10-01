@@ -18,7 +18,7 @@ from uuid_forge.config import (
     load_config_from_env,
     validate_config_security,
 )
-from uuid_forge.core import IDConfig, generate_salt
+from uuid_forge.core import IDConfig, Namespace, generate_salt
 
 
 class TestLoadConfigFromEnv:
@@ -49,7 +49,7 @@ class TestLoadConfigFromEnv:
 
         config = load_config_from_env()
 
-        expected_namespace = uuid_module.uuid5(uuid_module.NAMESPACE_DNS, "test.example.com")
+        expected_namespace = Namespace("test.example.com")
         assert config.namespace == expected_namespace
 
     def test_load_both_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -59,7 +59,7 @@ class TestLoadConfigFromEnv:
 
         config = load_config_from_env()
 
-        expected_namespace = uuid_module.uuid5(uuid_module.NAMESPACE_DNS, "mycompany.com")
+        expected_namespace = Namespace("mycompany.com")
         assert config.namespace == expected_namespace
         assert config.salt == "production-salt"
 
@@ -71,7 +71,7 @@ class TestLoadConfigFromEnv:
         config = load_config_from_env(namespace_env="CUSTOM_NS", salt_env="CUSTOM_SALT")
 
         assert config.salt == "custom-salt"
-        expected_namespace = uuid_module.uuid5(uuid_module.NAMESPACE_DNS, "custom.example.com")
+        expected_namespace = Namespace("custom.example.com")
         assert config.namespace == expected_namespace
 
     def test_invalid_namespace_value(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -334,7 +334,7 @@ class TestConfigIntegration:
         assert config.salt == prod_salt
 
         # Namespace should be derived from domain
-        expected_ns = uuid_module.uuid5(uuid_module.NAMESPACE_DNS, "production.company.com")
+        expected_ns = Namespace("production.company.com")
         assert config.namespace == expected_ns
 
     def test_development_setup(self, monkeypatch: pytest.MonkeyPatch) -> None:

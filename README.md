@@ -20,6 +20,7 @@ When building microservices or distributed systems, you often need the same enti
 - **MinIO** (object storage)
 
 Traditional approaches require:
+
 - ❌ Central ID generation service (single point of failure)
 - ❌ Database lookups before accessing storage (performance impact)
 - ❌ Storing mappings between systems (complexity)
@@ -190,23 +191,23 @@ uuid_from_data = generate_uuid_only(
 ### Repository Pattern with UUID Generation
 
 ```python
-from uuid_forge import UUIDGenerator, IDConfig
+from uuid_forge import UUIDGenerator, IDConfig, UUID, Namespace
 from typing import Protocol
 import os
 
 class EntityRepository(Protocol):
-    def generate_id(self, **kwargs) -> uuid.UUID: ...
+    def generate_id(self, **kwargs) -> UUID: ...
 
 class InvoiceRepository:
     def __init__(self):
         self.uuid_generator = UUIDGenerator(
             config=IDConfig(
-                namespace=uuid.uuid5(uuid.NAMESPACE_DNS, "invoices.mycompany.com"),
+                namespace=Namespace("invoices.mycompany.com"),
                 salt=os.getenv("UUID_FORGE_SALT")
             )
         )
 
-    def generate_id(self, region: str, number: int) -> uuid.UUID:
+    def generate_id(self, region: str, number: int) -> UUID:
         return self.uuid_generator.generate("invoice", region=region, number=number)
 
     def generate_prefixed_id(self, region: str, number: int) -> str:
@@ -221,7 +222,7 @@ class InvoiceRepository:
 ### Factory Pattern for Multi-Entity Systems
 
 ```python
-from uuid_forge import UUIDGenerator, IDConfig
+from uuid_forge import UUIDGenerator, IDConfig, UUID
 from enum import Enum
 
 class EntityType(Enum):
@@ -239,7 +240,7 @@ class UUIDFactory:
             EntityType.INVOICE: UUIDGenerator(config),
         }
 
-    def create_uuid(self, entity_type: EntityType, **attributes) -> uuid.UUID:
+    def create_uuid(self, entity_type: EntityType, **attributes) -> UUID:
         return self.generators[entity_type].generate(entity_type.value, **attributes)
 
     def create_prefixed_uuid(self, entity_type: EntityType, **attributes) -> str:
@@ -265,23 +266,23 @@ order_id = factory.create_prefixed_uuid(EntityType.ORDER, user_id=user_uuid, ite
 
 ```python
 from abc import ABC, abstractmethod
-from uuid_forge import UUIDGenerator, IDConfig
+from uuid_forge import UUIDGenerator, IDConfig, UUID
 
 class UUIDService(ABC):
     @abstractmethod
-    def generate_user_uuid(self, email: str) -> uuid.UUID: ...
+    def generate_user_uuid(self, email: str) -> UUID: ...
 
     @abstractmethod
-    def generate_order_uuid(self, user_id: uuid.UUID, timestamp: int) -> uuid.UUID: ...
+    def generate_order_uuid(self, user_id: UUID, timestamp: int) -> UUID: ...
 
 class ProductionUUIDService(UUIDService):
     def __init__(self, config: IDConfig):
         self.generator = UUIDGenerator(config)
 
-    def generate_user_uuid(self, email: str) -> uuid.UUID:
+    def generate_user_uuid(self, email: str) -> UUID:
         return self.generator.generate("user", email=email)
 
-    def generate_order_uuid(self, user_id: uuid.UUID, timestamp: int) -> uuid.UUID:
+    def generate_order_uuid(self, user_id: UUID, timestamp: int) -> UUID:
         return self.generator.generate("order", user_id=str(user_id), timestamp=timestamp)
 
 class TestUUIDService(UUIDService):
@@ -291,10 +292,10 @@ class TestUUIDService(UUIDService):
             config=IDConfig(salt="test-salt-for-reproducible-tests")
         )
 
-    def generate_user_uuid(self, email: str) -> uuid.UUID:
+    def generate_user_uuid(self, email: str) -> UUID:
         return self.generator.generate("user", email=email)
 
-    def generate_order_uuid(self, user_id: uuid.UUID, timestamp: int) -> uuid.UUID:
+    def generate_order_uuid(self, user_id: UUID, timestamp: int) -> UUID:
         return self.generator.generate("order", user_id=str(user_id), timestamp=timestamp)
 ```
 
@@ -324,8 +325,7 @@ UUID-Forge provides flexible configuration through the `IDConfig` class:
 ### Basic Configuration
 
 ```python
-from uuid_forge import IDConfig
-import uuid
+from uuid_forge import IDConfig, Namespace
 import os
 
 # Default configuration (no salt - not recommended for production)
@@ -336,7 +336,7 @@ config = IDConfig(salt=os.getenv("UUID_FORGE_SALT"))
 
 # Custom namespace for your organization
 config = IDConfig(
-    namespace=uuid.uuid5(uuid.NAMESPACE_DNS, "mycompany.com"),
+    namespace=Namespace("mycompany.com"),
     salt=os.getenv("UUID_FORGE_SALT")
 )
 ```
@@ -360,8 +360,9 @@ config = load_config_from_env(
 ### Configuration Hierarchy
 
 1. **Namespace**: Provides logical separation between applications
+
    - Default: `uuid.NAMESPACE_DNS`
-   - Custom: `uuid.uuid5(uuid.NAMESPACE_DNS, "your-domain.com")`
+   - Custom: `Namespace("your-domain.com")`
    - From env: Set `UUID_FORGE_NAMESPACE=your-domain.com`
 
 2. **Salt**: Adds cryptographic security to prevent UUID prediction
@@ -374,35 +375,38 @@ config = load_config_from_env(
 #### Service-Based Configuration
 
 ```python
-from uuid_forge import UUIDGenerator, IDConfig
+from uuid_forge import UUIDGenerator, IDConfig, UUID, Namespace
 import os
 
 class UserService:
     def __init__(self):
         self.uuid_generator = UUIDGenerator(
             config=IDConfig(
-                namespace=uuid.uuid5(uuid.NAMESPACE_DNS, "users.mycompany.com"),
+                namespace=Namespace("users.mycompany.com"),
                 salt=os.getenv("UUID_FORGE_SALT")
             )
         )
 
-    def create_user_uuid(self, email: str) -> uuid.UUID:
+    def create_user_uuid(self, email: str) -> UUID:
         return self.uuid_generator.generate("user", email=email)
 ```
 
 #### Multi-Tenant Configuration
 
 ```python
+from uuid_forge import UUIDGenerator, IDConfig, UUID, Namespace
+import os
+
 class TenantUUIDService:
     def __init__(self, tenant_id: str):
         self.generator = UUIDGenerator(
             config=IDConfig(
-                namespace=uuid.uuid5(uuid.NAMESPACE_DNS, f"tenant-{tenant_id}.mycompany.com"),
+                namespace=Namespace(f"tenant-{tenant_id}.mycompany.com"),
                 salt=os.getenv("UUID_FORGE_SALT")
             )
         )
 
-    def generate_entity_uuid(self, entity_type: str, **kwargs) -> uuid.UUID:
+    def generate_entity_uuid(self, entity_type: str, **kwargs) -> UUID:
         return self.generator.generate(entity_type, **kwargs)
 ```
 
@@ -425,6 +429,7 @@ uuid-forge new-salt
 ```
 
 Store it securely:
+
 - Environment variables
 - Secret management systems (AWS Secrets Manager, HashiCorp Vault, etc.)
 - **Never commit to version control**
@@ -520,6 +525,7 @@ UUID-Forge uses **UUIDv5** (name-based, SHA-1) for deterministic generation:
 4. **Namespace** provides additional isolation (optional)
 
 The combination is hashed to produce a UUID that's:
+
 - ✅ Deterministic (same inputs → same UUID)
 - ✅ Unique (different inputs → different UUIDs)
 - ✅ Secure (unpredictable with salt)

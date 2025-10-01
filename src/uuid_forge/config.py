@@ -10,7 +10,7 @@ import os
 import uuid as uuid_module
 from pathlib import Path
 
-from uuid_forge.core import IDConfig, generate_salt
+from uuid_forge.core import IDConfig, Namespace, generate_salt
 
 
 def load_config_from_env(
@@ -78,8 +78,9 @@ def load_config_from_env(
     >>> os.environ["UUID_FORGE_SALT"] = "test-salt-123"
     >>> config2 = load_config_from_env()
     >>> assert config2.salt == "test-salt-123"
-    >>> # Namespace should be derived from domain
-    >>> expected_namespace = uuid.uuid5(uuid.NAMESPACE_DNS, "test.example.com")
+    >>> # Namespace should be a Namespace instance
+    >>> from uuid_forge.core import Namespace
+    >>> expected_namespace = Namespace("test.example.com")
     >>> assert config2.namespace == expected_namespace
     >>> # Cleanup
     >>> del os.environ["UUID_FORGE_NAMESPACE"]
@@ -96,9 +97,9 @@ def load_config_from_env(
     # Get namespace from environment
     namespace_value = os.getenv(namespace_env)
     if namespace_value:
-        # Convert domain string to UUID namespace
+        # Convert domain string to Namespace
         try:
-            namespace = uuid_module.uuid5(uuid_module.NAMESPACE_DNS, namespace_value)
+            namespace = Namespace(namespace_value)
         except Exception as e:
             raise ValueError(
                 f"Invalid namespace value in {namespace_env}: {namespace_value}"
