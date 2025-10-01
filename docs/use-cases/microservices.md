@@ -110,12 +110,21 @@ def get_order_uuid(user_email: str, timestamp: int):
 ### User Management Service
 
 ```python
+from datetime import datetime
+from uuid_forge import UUIDGenerator, IDConfig, Namespace
+import os
+
 class UserManagementService:
     def __init__(self):
-        self.user_forge = UUIDGenerator(namespace=USERS_NS)
+        config = IDConfig(
+            namespace=Namespace("users.mycompany.com"),
+            salt=os.getenv("UUID_FORGE_SALT")
+        )
+        self.user_forge = UUIDGenerator(config=config)
 
     def register_user(self, email, profile_data):
-        user_id = self.user_forge.generate(email)
+        # Generate deterministic user ID from email
+        user_id = self.user_forge.generate("user", email=email.lower().strip())
 
         user = {
             "id": user_id,
@@ -137,7 +146,7 @@ class UserManagementService:
 
     def get_user_id(self, email):
         """Other services can call this to get consistent user ID"""
-        return self.user_forge.generate(email)
+        return self.user_forge.generate("user", email=email.lower().strip())
 ```
 
 ### Order Processing Service
@@ -145,30 +154,39 @@ class UserManagementService:
 ```python
 class OrderProcessingService:
     def __init__(self):
-        self.user_forge = UUIDGenerator(namespace=USERS_NS)
-        self.order_forge = UUIDGenerator(namespace=ORDERS_NS)
-        self.product_forge = UUIDGenerator(namespace=PRODUCTS_NS)
+        salt = os.getenv("UUID_FORGE_SALT")
+        self.user_forge = UUIDGenerator(
+            config=IDConfig(namespace=Namespace("users.mycompany.com"), salt=salt)
+        )
+        self.order_forge = UUIDGenerator(
+            config=IDConfig(namespace=Namespace("orders.mycompany.com"), salt=salt)
+        )
+        self.product_forge = UUIDGenerator(
+            config=IDConfig(namespace=Namespace("products.mycompany.com"), salt=salt)
+        )
 
     def create_order(self, user_email, product_skus, quantities):
-        # Generate consistent IDs
-        user_id = self.user_forge.generate(user_email)
+        # Generate consistent user ID (same as User Service would generate!)
+        user_id = self.user_forge.generate("user", email=user_email.lower().strip())
 
         order_items = []
         for sku, qty in zip(product_skus, quantities):
-            product_id = self.product_forge.generate(sku)
+            product_id = self.product_forge.generate("product", sku=sku.upper().strip())
             order_items.append({
                 "product_id": product_id,
                 "sku": sku,
                 "quantity": qty
             })
 
-        # Generate order ID from user and items
-        order_data = {
-            "user_id": user_id,
-            "items": sorted(order_items, key=lambda x: x["sku"]),
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        order_id = self.order_forge.generate(order_data)
+        # Generate order ID from business data
+        # Use tuple of SKUs for deterministic ordering
+        skus_tuple = tuple(sorted(product_skus))
+        order_id = self.order_forge.generate(
+            "order",
+            user_email=user_email.lower().strip(),
+            skus=skus_tuple,
+            timestamp=datetime.utcnow().isoformat()
+        )
 
         order = {
             "id": order_id,
@@ -195,19 +213,25 @@ class OrderProcessingService:
 ```python
 class NotificationService:
     def __init__(self):
-        self.user_forge = UUIDGenerator(namespace=USERS_NS)
-        self.notification_forge = UUIDGenerator(namespace=NOTIFICATIONS_NS)
+        salt = os.getenv("UUID_FORGE_SALT")
+        self.user_forge = UUIDGenerator(
+            config=IDConfig(namespace=Namespace("users.mycompany.com"), salt=salt)
+        )
+        self.notification_forge = UUIDGenerator(
+            config=IDConfig(namespace=Namespace("notifications.mycompany.com"), salt=salt)
+        )
 
     def handle_order_created(self, event_data):
         user_id = event_data["user_id"]
         order_id = event_data["order_id"]
 
-        # Generate notification ID
-        notification_id = self.notification_forge.generate({
-            "user_id": user_id,
-            "type": "order_confirmation",
-            "reference_id": order_id
-        })
+        # Generate notification ID from business data
+        notification_id = self.notification_forge.generate(
+            "notification",
+            user_id=str(user_id),
+            notification_type="order_confirmation",
+            reference_id=str(order_id)
+        )
 
         notification = {
             "id": notification_id,
@@ -229,15 +253,20 @@ Use deterministic UUIDs for event correlation:
 ```python
 class EventService:
     def __init__(self):
-        self.event_forge = UUIDGenerator(namespace="events")
+        config = IDConfig(
+            namespace=Namespace("events.mycompany.com"),
+            salt=os.getenv("UUID_FORGE_SALT")
+        )
+        self.event_forge = UUIDGenerator(config=config)
 
     def create_correlation_id(self, user_id, action, timestamp):
         """Create deterministic correlation ID for event tracing"""
-        return self.event_forge.generate({
-            "user_id": user_id,
-            "action": action,
-            "timestamp": timestamp.isoformat()
-        })
+        return self.event_forge.generate(
+            "correlation",
+            user_id=str(user_id),
+            action=action,
+            timestamp=timestamp.isoformat()
+        )
 
     def publish_correlated_events(self, user_id, action):
         timestamp = datetime.utcnow()
@@ -258,20 +287,32 @@ class EventService:
 ```python
 class SagaOrchestrator:
     def __init__(self):
-        self.saga_forge = UUIDGenerator(namespace="sagas")
-        self.user_forge = UUIDGenerator(namespace=USERS_NS)
-        self.order_forge = UUIDGenerator(namespace=ORDERS_NS)
+        salt = os.getenv("UUID_FORGE_SALT")
+        self.saga_forge = UUIDGenerator(
+            config=IDConfig(namespace=Namespace("sagas.mycompany.com"), salt=salt)
+        )
+        self.user_forge = UUIDGenerator(
+            config=IDConfig(namespace=Namespace("users.mycompany.com"), salt=salt)
+        )
+        self.order_forge = UUIDGenerator(
+            config=IDConfig(namespace=Namespace("orders.mycompany.com"), salt=salt)
+        )
 
-    def start_order_saga(self, user_email, order_data):
-        user_id = self.user_forge.generate(user_email)
-        order_id = self.order_forge.generate(order_data)
+    def start_order_saga(self, user_email, product_skus, timestamp):
+        user_id = self.user_forge.generate("user", email=user_email.lower().strip())
+        order_id = self.order_forge.generate(
+            "order",
+            user_email=user_email.lower().strip(),
+            skus=tuple(sorted(product_skus)),
+            timestamp=timestamp
+        )
 
         # Generate deterministic saga ID
-        saga_id = self.saga_forge.generate({
-            "type": "order_processing",
-            "user_id": user_id,
-            "order_id": order_id
-        })
+        saga_id = self.saga_forge.generate(
+            "order_saga",
+            user_id=str(user_id),
+            order_id=str(order_id)
+        )
 
         saga_state = {
             "saga_id": saga_id,
@@ -293,21 +334,25 @@ class SagaOrchestrator:
 ```python
 class APIGateway:
     def __init__(self):
-        self.trace_forge = UUIDGenerator(namespace="traces")
+        config = IDConfig(
+            namespace=Namespace("traces.mycompany.com"),
+            salt=os.getenv("UUID_FORGE_SALT")
+        )
+        self.trace_forge = UUIDGenerator(config=config)
 
     def create_trace_id(self, request):
         """Create deterministic trace ID for request tracking"""
-        trace_data = {
-            "method": request.method,
-            "path": request.path,
-            "user_agent": request.headers.get("User-Agent", ""),
-            "timestamp": datetime.utcnow().replace(microsecond=0).isoformat()
-        }
-        return self.trace_forge.generate(trace_data)
+        return self.trace_forge.generate(
+            "trace",
+            method=request.method,
+            path=request.path,
+            user_agent=request.headers.get("User-Agent", ""),
+            timestamp=datetime.utcnow().replace(microsecond=0).isoformat()
+        )
 
     def process_request(self, request):
         trace_id = self.create_trace_id(request)
-        request.headers["X-Trace-ID"] = trace_id
+        request.headers["X-Trace-ID"] = str(trace_id)
         return self.forward_to_service(request)
 ```
 
@@ -318,11 +363,17 @@ class APIGateway:
 ```python
 class ReportingService:
     def __init__(self):
-        self.user_forge = UUIDGenerator(namespace=USERS_NS)
-        self.order_forge = UUIDGenerator(namespace=ORDERS_NS)
+        salt = os.getenv("UUID_FORGE_SALT")
+        self.user_forge = UUIDGenerator(
+            config=IDConfig(namespace=Namespace("users.mycompany.com"), salt=salt)
+        )
+        self.order_forge = UUIDGenerator(
+            config=IDConfig(namespace=Namespace("orders.mycompany.com"), salt=salt)
+        )
 
     def generate_user_order_report(self, user_email):
-        user_id = self.user_forge.generate(user_email)
+        # Generate consistent user ID (same as User Service)
+        user_id = self.user_forge.generate("user", email=user_email.lower().strip())
 
         # Query user data from user service database
         user_data = self.user_db.find_one({"id": user_id})
@@ -354,8 +405,8 @@ class IntegrationTestSuite:
 
         # Generate user ID from different services
         user_id_1 = self.user_service.get_user_id(email)
-        user_id_2 = self.order_service.user_forge.generate(email)
-        user_id_3 = self.notification_service.user_forge.generate(email)
+        user_id_2 = self.order_service.user_forge.generate("user", email=email.lower().strip())
+        user_id_3 = self.notification_service.user_forge.generate("user", email=email.lower().strip())
 
         # All should be identical
         assert user_id_1 == user_id_2 == user_id_3
