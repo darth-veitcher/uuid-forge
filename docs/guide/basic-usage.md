@@ -5,95 +5,107 @@ This guide covers the fundamental ways to use UUID-Forge in your applications.
 ## Quick Start
 
 ```python
-from uuid_forge import UUIDGenerator
+from uuid_forge import UUIDGenerator, IDConfig
+import os
 
-# Create a forge instance
-forge = UUIDGenerator()
+# Create a generator with configuration
+config = IDConfig(salt=os.getenv("UUID_FORGE_SALT"))
+generator = UUIDGenerator(config=config)
 
-# Generate a UUID from a string
-user_id = forge.generate("john.doe@example.com")
+# Generate a UUID from entity type and business data
+user_id = generator.generate("user", email="john.doe@example.com")
 print(user_id)  # 550e8400-e29b-41d4-a716-446655440000
 ```
 
-## Creating UUIDs from Different Input Types
+## Creating UUIDs from Business Data
 
-### From Strings
+### Basic Entity Generation
 
 ```python
-# Simple string
-uuid1 = forge.generate("user123")
+# User entity by email
+user_uuid = generator.generate("user", email="user@example.com")
 
-# Email addresses
-uuid2 = forge.generate("user@example.com")
+# Order entity by customer and timestamp
+order_uuid = generator.generate("order", customer_id="12345", timestamp="2024-01-15")
 
-# Complex identifiers
-uuid3 = forge.generate("order:2024:Q1:12345")
+# Product entity by SKU
+product_uuid = generator.generate("product", sku="WIDGET-001")
 ```
 
-### From Dictionaries
+### Multiple Attributes
 
 ```python
-# User data
-user_data = {
-    "email": "john@example.com",
-    "username": "john_doe",
-    "department": "engineering"
-}
-user_uuid = forge.generate(user_data)
+# Invoice with multiple identifying attributes
+invoice_uuid = generator.generate(
+    "invoice",
+    region="EUR",
+    year=2024,
+    quarter="Q1",
+    number=12345
+)
 
-# Order data
-order_data = {
-    "customer_id": "12345",
-    "product_id": "67890",
-    "timestamp": "2024-01-15T10:30:00Z"
-}
-order_uuid = forge.generate(order_data)
+# User with multiple identifiers
+user_uuid = generator.generate(
+    "user",
+    email="john@example.com",
+    username="john_doe",
+    department="engineering"
+)
 ```
 
-### From Objects
+### Using Different Entity Types
 
 ```python
-class User:
-    def __init__(self, email, name):
-        self.email = email
-        self.name = name
+# Each entity type creates a separate UUID namespace
+user_uuid = generator.generate("user", identifier="alice@example.com")
+order_uuid = generator.generate("order", identifier="alice@example.com")
+invoice_uuid = generator.generate("invoice", identifier="alice@example.com")
 
-    def __str__(self):
-        return f"{self.email}:{self.name}"
-
-user = User("john@example.com", "John Doe")
-user_uuid = forge.generate(user)
+# All different UUIDs, even though the identifier is the same
+assert user_uuid != order_uuid != invoice_uuid
 ```
 
-## Different Output Formats
+## Working with UUID Objects
 
 ```python
-# Default hex format with dashes
-uuid_hex = forge.generate("test", format="hex")
-# Output: 550e8400-e29b-41d4-a716-446655440000
+from uuid_forge import UUID
 
-# URN format
-uuid_urn = forge.generate("test", format="urn")
-# Output: urn:uuid:550e8400-e29b-41d4-a716-446655440000
+# The generate() method returns a standard UUID object
+user_uuid = generator.generate("user", email="alice@example.com")
 
-# Raw bytes
-uuid_bytes = forge.generate("test", format="bytes")
-# Output: b'U\x0e\x84\x00\xe2\x9b...'
+# Access UUID properties
+print(user_uuid.hex)        # Hex string without dashes
+print(user_uuid.bytes)      # Raw bytes
+print(str(user_uuid))       # Standard hyphenated format
+print(user_uuid.urn)        # URN format
+print(user_uuid.int)        # Integer representation
 
-# Hex without dashes
-uuid_plain = forge.generate("test", format="hex", separator="")
-# Output: 550e8400e29b41d4a716446655440000
+# UUID comparison and operations
+another_uuid = generator.generate("user", email="bob@example.com")
+print(user_uuid < another_uuid)  # UUIDs are comparable
 ```
 
 ## Using Different Namespaces
 
 ```python
-# Different namespaces produce different UUIDs for same input
-forge_users = UUIDGenerator(namespace="users")
-forge_orders = UUIDGenerator(namespace="orders")
+from uuid_forge import Namespace
 
-user_uuid = forge_users.generate("john@example.com")
-order_uuid = forge_orders.generate("john@example.com")
+# Different namespaces produce different UUIDs for same input
+users_config = IDConfig(
+    namespace=Namespace("users.mycompany.com"),
+    salt=os.getenv("UUID_FORGE_SALT")
+)
+orders_config = IDConfig(
+    namespace=Namespace("orders.mycompany.com"),
+    salt=os.getenv("UUID_FORGE_SALT")
+)
+
+user_generator = UUIDGenerator(config=users_config)
+order_generator = UUIDGenerator(config=orders_config)
+
+# Same business data, different namespaces = different UUIDs
+user_uuid = user_generator.generate("user", email="john@example.com")
+order_uuid = order_generator.generate("order", email="john@example.com")
 
 print(user_uuid != order_uuid)  # True
 ```
@@ -108,59 +120,80 @@ emails = [
     "user3@example.com"
 ]
 
-uuids = [forge.generate(email) for email in emails]
+# All with same entity type
+user_uuids = [generator.generate("user", email=email) for email in emails]
 
-# Or with custom namespace per UUID
-namespaces = ["users", "admins", "guests"]
-uuids = [
-    UUIDGenerator(namespace=ns).generate(email)
-    for ns, email in zip(namespaces, emails)
+# Different entity types
+entities = [
+    ("user", {"email": "user1@example.com"}),
+    ("admin", {"email": "admin@example.com"}),
+    ("guest", {"session_id": "12345"}),
 ]
+uuids = [generator.generate(entity_type, **attrs) for entity_type, attrs in entities]
 ```
 
-## Working with Existing UUIDs
+## Working with UUIDs Across Systems
 
 ```python
-import uuid
+# Generate UUID in one system
+invoice_uuid = generator.generate("invoice", region="EUR", number=12345)
 
-# Convert existing UUID to different format
-existing_uuid = uuid.uuid4()
-uuid_string = str(existing_uuid)
+# Store in database
+db.execute(
+    "INSERT INTO invoices (id, region, number) VALUES (%s, %s, %s)",
+    (invoice_uuid, "EUR", 12345)
+)
 
-# Regenerate deterministically
-regenerated = forge.generate(uuid_string)
+# Later, in a different service/system, regenerate the same UUID
+# No database lookup needed!
+same_uuid = generator.generate("invoice", region="EUR", number=12345)
+
+# Retrieve from S3 directly
+s3_object = s3.get_object(
+    Bucket="invoices",
+    Key=f"invoices/{same_uuid}.pdf"
+)
 ```
 
-## Error Handling
+## Using with Prefixes
 
 ```python
-try:
-    # This will work
-    valid_uuid = forge.generate("valid_input")
+from uuid_forge import generate_uuid_with_prefix, extract_uuid_from_prefixed
 
-    # This might raise an exception
-    invalid_uuid = forge.generate(None)
+# Generate with human-readable prefix
+prefixed_id = generator.generate_with_prefix(
+    "invoice",
+    prefix="INV-EUR",
+    region="EUR",
+    number=12345
+)
+print(prefixed_id)  # INV-EUR-550e8400-e29b-41d4-a716-446655440000
 
-except ValueError as e:
-    print(f"Invalid input: {e}")
-except Exception as e:
-    print(f"Unexpected error: {e}")
+# Extract UUID when needed
+uuid_only = extract_uuid_from_prefixed(prefixed_id)
+print(uuid_only)  # 550e8400-e29b-41d4-a716-446655440000
 ```
 
-## Validation
+## UUID Properties and Operations
 
 ```python
-import uuid
+# Generate a UUID
+user_uuid = generator.generate("user", email="alice@example.com")
 
-# Validate generated UUID
-generated = forge.generate("test")
+# UUID is a standard Python uuid.UUID object
+print(isinstance(user_uuid, UUID))  # True
 
-# Check if it's a valid UUID
-try:
-    parsed = uuid.UUID(generated)
-    print(f"Valid UUID: {parsed}")
-except ValueError:
-    print("Invalid UUID generated")
+# String conversion
+print(str(user_uuid))  # Standard format with hyphens
+
+# UUIDs are hashable and can be used in sets/dicts
+uuid_set = {user_uuid}
+uuid_dict = {user_uuid: "alice"}
+
+# UUIDs are comparable
+uuid1 = generator.generate("user", email="alice@example.com")
+uuid2 = generator.generate("user", email="bob@example.com")
+print(uuid1 < uuid2)  # Deterministic comparison
 ```
 
 ## Next Steps
