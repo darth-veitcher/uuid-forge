@@ -431,11 +431,16 @@ class IntegrationTestSuite:
 
 ```python
 import logging
+from uuid_forge import UUIDGenerator, IDConfig, Namespace
+
+# Define namespace constant
+USERS_NS = Namespace("microservices.myapp.com/users")
 
 class UUIDTracker:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.user_forge = UUIDGenerator(namespace=USERS_NS)
+        config = IDConfig(namespace=USERS_NS, salt="v1")
+        self.user_forge = UUIDGenerator(config)
 
     def track_uuid_usage(self, service_name, entity_type, input_data, uuid_result):
         """Track UUID generation for debugging and monitoring"""

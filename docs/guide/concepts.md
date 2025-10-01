@@ -61,11 +61,13 @@ You can define custom namespaces for your application:
 ```python
 from uuid_forge import UUIDGenerator, IDConfig, Namespace
 from uuid import UUID
-import uuid
 
-# Create a custom namespace for your application
-my_namespace = uuid.uuid4()
-forge = UUIDGenerator(namespace=my_namespace)
+# Create a namespace for your application domain
+my_namespace = Namespace("myapp.com/users")
+
+# Configure and create generator
+config = IDConfig(namespace=my_namespace, salt="v1")
+generator = UUIDGenerator(config)
 ```
 
 ## Input Processing
