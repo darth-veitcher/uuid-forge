@@ -21,67 +21,88 @@ Each service uses its own namespace for entity isolation:
 
 ```python
 # User Service
-from uuid_forge import UUIDGenerator
-# Service-specific namespace
-USER_SERVICE_NS = Namespace("user-service.mycompany.com")
-user_forge = UUIDGenerator(namespace=USER_SERVICE_NS)
+from uuid_forge import UUIDGenerator, IDConfig, Namespace
+import os
+
+# Service-specific namespace and configuration
+user_config = IDConfig(
+    namespace=Namespace("user-service.mycompany.com"),
+    salt=os.getenv("UUID_FORGE_SALT")
+)
+user_forge = UUIDGenerator(config=user_config)
 
 class UserService:
     def create_user(self, email, name):
-        user_id = user_forge.generate({
-            "email": email.lower().strip(),
-            "type": "user"
-        })
+        # Generate deterministic user ID from email
+        user_id = user_forge.generate(
+            "user",
+            email=email.lower().strip()
+        )
         return {"id": user_id, "email": email, "name": name}
 ```
 
 ```python
 # Order Service
-ORDER_SERVICE_NS = Namespace("order-service.mycompany.com")
-order_forge = UUIDGenerator(namespace=ORDER_SERVICE_NS)
+from uuid_forge import UUIDGenerator, IDConfig, Namespace
+import os
+
+order_config = IDConfig(
+    namespace=Namespace("order-service.mycompany.com"),
+    salt=os.getenv("UUID_FORGE_SALT")
+)
+order_forge = UUIDGenerator(config=order_config)
+
+# Shared user generator to create consistent user references
+user_forge = UUIDGenerator(config=user_config)
 
 class OrderService:
     def create_order(self, user_email, items):
-        # Generate consistent user reference
-        user_id = user_forge.generate({
-            "email": user_email.lower().strip(),
-            "type": "user"
-        })
+        # Generate consistent user reference (same as User Service!)
+        user_id = user_forge.generate(
+            "user",
+            email=user_email.lower().strip()
+        )
 
         # Generate order ID
-        order_id = order_forge.generate({
-            "user_id": user_id,
-            "items": sorted(items),
-            "type": "order"
-        })
+        order_id = order_forge.generate(
+            "order",
+            user_email=user_email.lower().strip(),
+            items=tuple(sorted(items))  # Use tuple for hashability
+        )
 
         return {"id": order_id, "user_id": user_id, "items": items}
 ```
 
 ### 2. Entity-Type-Based Namespaces
 
-Create namespaces based on entity types:
+Create namespaces based on entity types for organizational consistency:
 
 ```python
-# Root namespace for the organization
-ROOT_NS = Namespace("mycompany.com")
+from uuid_forge import UUIDGenerator, IDConfig, Namespace
+import os
 
-# Entity-specific namespaces
-USERS_NS = uuid.uuid5(ROOT_NS, "users")
-ORDERS_NS = uuid.uuid5(ROOT_NS, "orders")
-PRODUCTS_NS = uuid.uuid5(ROOT_NS, "products")
+# Entity-specific namespaces under your organization's domain
+USERS_NS = Namespace("users.mycompany.com")
+ORDERS_NS = Namespace("orders.mycompany.com")
+PRODUCTS_NS = Namespace("products.mycompany.com")
 
-# Shared forge instances
-user_forge = UUIDGenerator(namespace=USERS_NS)
-order_forge = UUIDGenerator(namespace=ORDERS_NS)
-product_forge = UUIDGenerator(namespace=PRODUCTS_NS)
+# Shared configuration with salt
+salt = os.getenv("UUID_FORGE_SALT")
+
+# Shared generator instances with their respective namespaces
+user_forge = UUIDGenerator(config=IDConfig(namespace=USERS_NS, salt=salt))
+order_forge = UUIDGenerator(config=IDConfig(namespace=ORDERS_NS, salt=salt))
+product_forge = UUIDGenerator(config=IDConfig(namespace=PRODUCTS_NS, salt=salt))
 
 # Any service can generate consistent entity UUIDs
-def get_user_uuid(email):
-    return user_forge.generate(email.lower().strip())
+def get_user_uuid(email: str):
+    return user_forge.generate("user", email=email.lower().strip())
 
-def get_product_uuid(sku):
-    return product_forge.generate(sku.upper().strip())
+def get_product_uuid(sku: str):
+    return product_forge.generate("product", sku=sku.upper().strip())
+
+def get_order_uuid(user_email: str, timestamp: int):
+    return order_forge.generate("order", user_email=user_email.lower(), timestamp=timestamp)
 ```
 
 ## Service Integration Examples
