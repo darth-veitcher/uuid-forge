@@ -75,7 +75,7 @@ jobs:
           uv run ruff format --check src tests
 
   docs:
-    name: Build Documentation
+    name: Validate Documentation Build
     runs-on: ubuntu-latest
 
     steps:
@@ -92,55 +92,10 @@ jobs:
       - name: Install dependencies
         run: uv sync --group docs
 
-      - name: Build documentation
+      - name: Build documentation (validation only)
         run: |
           uv run mkdocs build --strict
-
-      - name: Upload documentation artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: docs
-          path: site/
-
-  publish-docs:
-    name: Publish Documentation
-    runs-on: ubuntu-latest
-    needs: [test, lint, docs]
-    if: github.ref == 'refs/heads/main' || (github.event_name == 'release' && github.event.action == 'published')
-    permissions:
-      contents: write # Needed to push to gh-pages branch
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-
-      - name: Set up Python
-        run: uv python install 3.11
-
-      - name: Install dependencies
-        run: uv sync --group docs
-
-      - name: Configure Git
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-
-      - name: Deploy documentation with mike
-        run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            # For releases, use the tag version
-            VERSION="${GITHUB_REF#refs/tags/}"
-            uv run mike deploy --push --update-aliases $VERSION latest
-            uv run mike set-default --push latest
-          else
-            # For main branch pushes, deploy as dev version
-            uv run mike deploy --push dev
-          fi
+          echo "✅ Documentation builds successfully"
 
   publish-pypi:
     name: Publish to PyPI

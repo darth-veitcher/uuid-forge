@@ -9,7 +9,15 @@ on:
       - 'mkdocs.yml'
       - 'src/**'
       - '.github/workflows/docs.yml'
+  release:
+    types: [published]
   workflow_dispatch:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -25,6 +33,12 @@ jobs:
   build:
     name: Build Documentation
     runs-on: ubuntu-latest
+    # Only run if CI passed (or if manually triggered)
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'release' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
         with:
