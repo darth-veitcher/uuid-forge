@@ -5,7 +5,10 @@
 [![PyPI version](https://badge.fury.io/py/uuid-forge.svg)](https://badge.fury.io/py/uuid-forge)
 [![Python versions](https://img.shields.io/pypi/pyversions/uuid-forge.svg)](https://pypi.org/project/uuid-forge/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Documentation](https://img.shields.io/badge/docs-github%20pages-blue)](https://darth-veitcher.github.io/uuid-forge)
 [![Code coverage](https://codecov.io/gh/yourusername/uuid-forge/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/uuid-forge)
+
+> 📚 **[Read the full documentation](https://darth-veitcher.github.io/uuid-forge)** | [Getting Started](https://darth-veitcher.github.io/uuid-forge/getting-started/quickstart/) | [API Reference](https://darth-veitcher.github.io/uuid-forge/api/core/) | [CLI Guide](https://darth-veitcher.github.io/uuid-forge/guide/cli/)
 
 UUID-Forge provides a simple, secure way to generate **deterministic UUIDs** that remain consistent across multiple storage systems without requiring inter-service communication or centralized ID generation.
 
@@ -81,7 +84,21 @@ pip install uuid-forge
 pip install uuid-forge[dev,docs]
 ```
 
-## 🚀 Quick Start
+## � Documentation
+
+Comprehensive documentation is available at **[darth-veitcher.github.io/uuid-forge](https://darth-veitcher.github.io/uuid-forge)**
+
+### Quick Links
+
+- **[Getting Started](https://darth-veitcher.github.io/uuid-forge/getting-started/quickstart/)** - Installation and first steps
+- **[Configuration Guide](https://darth-veitcher.github.io/uuid-forge/getting-started/configuration/)** - Environment setup and security
+- **[Basic Usage](https://darth-veitcher.github.io/uuid-forge/guide/basic-usage/)** - Core concepts and patterns
+- **[Advanced Usage](https://darth-veitcher.github.io/uuid-forge/guide/advanced-usage/)** - Complex scenarios and optimization
+- **[CLI Guide](https://darth-veitcher.github.io/uuid-forge/guide/cli/)** - Command-line interface reference
+- **[API Reference](https://darth-veitcher.github.io/uuid-forge/api/core/)** - Complete API documentation
+- **[Use Cases](https://darth-veitcher.github.io/uuid-forge/use-cases/microservices/)** - Real-world examples and patterns
+
+## �🚀 Quick Start
 
 ### 1. Generate a Salt (One Time Setup)
 
@@ -583,7 +600,21 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for det
 
 MIT License - see [LICENSE](LICENSE) for details.
 
-## 🙏 Acknowledgments
+## � Learn More
+
+For detailed documentation, tutorials, and examples, visit:
+
+**🌐 [https://darth-veitcher.github.io/uuid-forge](https://darth-veitcher.github.io/uuid-forge)**
+
+The documentation includes:
+- Comprehensive guides and tutorials
+- Real-world use case examples
+- Complete API reference
+- CLI command reference
+- Best practices and security guidelines
+- Migration guides and troubleshooting
+
+## �🙏 Acknowledgments
 
 - Inspired by the need for zero-coordination microservices
 - Built with modern Python best practices using `uv` and `hatch-vcs`
