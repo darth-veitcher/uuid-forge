@@ -31,16 +31,20 @@ Data migration often involves moving data between different systems while mainta
 #### Legacy System to Modern Database
 
 ```python
-from uuid_forge import UUIDGenerator
+from uuid_forge import UUIDGenerator, IDConfig, Namespace
+from uuid import UUID
 import psycopg2
 import sqlite3
 
 class DatabaseMigrator:
     def __init__(self):
         # Generators for different entity types
-        self.user_gen = UUIDGenerator(namespace="users")
-        self.order_gen = UUIDGenerator(namespace="orders")
-        self.product_gen = UUIDGenerator(namespace="products")
+        config = IDConfig(namespace=Namespace("users"), salt="v1")
+        self.user_gen = UUIDGenerator(config)
+        config = IDConfig(namespace=Namespace("orders"), salt="v1")
+        self.order_gen = UUIDGenerator(config)
+        config = IDConfig(namespace=Namespace("products"), salt="v1")
+        self.product_gen = UUIDGenerator(config)
 
         # Database connections
         self.legacy_db = sqlite3.connect("legacy.db")
@@ -57,7 +61,7 @@ class DatabaseMigrator:
 
         for email, name, created_at in legacy_users:
             # Generate deterministic UUID for user
-            user_uuid = self.user_gen.generate(email)
+            user_uuid = self.user_gen.generate("user", email=email)
 
             # Insert into modern database
             modern_cursor.execute(
@@ -82,17 +86,17 @@ class DatabaseMigrator:
         legacy_orders = legacy_cursor.fetchall()
 
         for legacy_order_id, user_email, total, created_at in legacy_orders:
-            # Generate consistent UUIDs
-            user_uuid = self.user_gen.generate(user_email)
+            # Generate consistent user UUID
+            user_uuid = self.user_gen.generate("user", email=user_email)
 
-            # Generate order UUID from user and legacy order data
-            order_data = {
-                "user_email": user_email,
-                "legacy_id": legacy_order_id,
-                "total": total,
-                "created_at": created_at
-            }
-            order_uuid = self.order_gen.generate(order_data)
+            # Generate order UUID from identifying attributes
+            order_uuid = self.order_gen.generate(
+                "order",
+                user_email=user_email,
+                legacy_id=str(legacy_order_id),
+                total=str(total),
+                created_at=str(created_at)
+            )
 
             # Insert into modern database
             modern_cursor.execute(
@@ -119,9 +123,12 @@ class NoSQLToSQLMigrator:
         self.postgres_conn = psycopg2.connect("postgresql://...")
 
         # UUID generators
-        self.user_gen = UUIDGenerator(namespace="users")
-        self.post_gen = UUIDGenerator(namespace="posts")
-        self.comment_gen = UUIDGenerator(namespace="comments")
+        config = IDConfig(namespace=Namespace("users"), salt="v1")
+        self.user_gen = UUIDGenerator(config)
+        config = IDConfig(namespace=Namespace("posts"), salt="v1")
+        self.post_gen = UUIDGenerator(config)
+        config = IDConfig(namespace=Namespace("comments"), salt="v1")
+        self.comment_gen = UUIDGenerator(config)
 
     def migrate_user_posts(self):
         """Migrate nested document structure to relational tables"""
@@ -130,7 +137,7 @@ class NoSQLToSQLMigrator:
         # Read MongoDB documents
         for user_doc in self.mongo_db.users.find():
             user_email = user_doc["email"]
-            user_uuid = self.user_gen.generate(user_email)
+            user_uuid = self.user_gen.generate("user", email=user_email)
 
             # Migrate user
             cursor.execute(
@@ -146,7 +153,7 @@ class NoSQLToSQLMigrator:
                     "content": post["content"],
                     "created_at": post["created_at"].isoformat()
                 }
-                post_uuid = self.post_gen.generate(post_data)
+                post_uuid = self.post_gen.generate("user", email=post_data)
 
                 cursor.execute(
                     "INSERT INTO posts (id, user_id, title, content, created_at) VALUES (%s, %s, %s, %s, %s)",
@@ -161,7 +168,7 @@ class NoSQLToSQLMigrator:
                         "content": comment["content"],
                         "created_at": comment["created_at"].isoformat()
                     }
-                    comment_uuid = self.comment_gen.generate(comment_data)
+                    comment_uuid = self.comment_gen.generate("user", email=comment_data)
 
                     cursor.execute(
                         "INSERT INTO comments (id, post_id, author, content, created_at) VALUES (%s, %s, %s, %s, %s)",
@@ -189,8 +196,10 @@ class CloudMigrator:
         self.s3 = boto3.client('s3')
 
         # UUID generators
-        self.user_gen = UUIDGenerator(namespace="cloud-users")
-        self.file_gen = UUIDGenerator(namespace="cloud-files")
+        config = IDConfig(namespace=Namespace("cloud-users"), salt="v1")
+        self.user_gen = UUIDGenerator(config)
+        config = IDConfig(namespace=Namespace("cloud-files"), salt="v1")
+        self.file_gen = UUIDGenerator(config)
 
     def migrate_to_dynamodb(self):
         """Migrate relational data to DynamoDB"""
@@ -200,7 +209,7 @@ class CloudMigrator:
         cursor.execute("SELECT email, name, profile_data FROM users")
 
         for email, name, profile_data in cursor.fetchall():
-            user_uuid = self.user_gen.generate(email)
+            user_uuid = self.user_gen.generate("user", email=email)
 
             # Store in DynamoDB with UUID as partition key
             table.put_item(
@@ -226,7 +235,7 @@ class CloudMigrator:
                 "size": len(content),
                 "metadata": metadata
             }
-            file_uuid = self.file_gen.generate(file_data)
+            file_uuid = self.file_gen.generate("user", email=file_data)
             s3_key = f"migrated-files/{file_uuid}"
 
             # Upload to S3
@@ -252,7 +261,9 @@ class IncrementalMigrator:
         self.source_db = psycopg2.connect("postgresql://source/")
         self.target_db = psycopg2.connect("postgresql://target/")
 
-        self.user_gen = UUIDGenerator(namespace="incremental-users")
+        config = IDConfig(namespace=Namespace("incremental-users"), salt="v1")
+
+        self.user_gen = UUIDGenerator(config)
 
         # Track migration progress
         self.migration_state = {
@@ -279,7 +290,7 @@ class IncrementalMigrator:
 
         # Migrate batch with deterministic UUIDs
         for source_id, email, name in batch:
-            user_uuid = self.user_gen.generate(email)
+            user_uuid = self.user_gen.generate("user", email=email)
 
             # Use ON CONFLICT for idempotent migration
             target_cursor.execute(
@@ -317,7 +328,9 @@ class DataSynchronizer:
         self.system_a = psycopg2.connect("postgresql://system-a/")
         self.system_b = psycopg2.connect("postgresql://system-b/")
 
-        self.user_gen = UUIDGenerator(namespace="sync-users")
+        config = IDConfig(namespace=Namespace("sync-users"), salt="v1")
+
+        self.user_gen = UUIDGenerator(config)
         self.sync_log = []
 
     def sync_user_changes(self):
@@ -334,7 +347,7 @@ class DataSynchronizer:
         changes_a = cursor_a.fetchall()
 
         for email, name, updated_at in changes_a:
-            user_uuid = self.user_gen.generate(email)
+            user_uuid = self.user_gen.generate("user", email=email)
 
             # Apply change to system B
             cursor_b.execute(
@@ -368,7 +381,9 @@ class MigrationValidator:
         self.source_db = psycopg2.connect("postgresql://source/")
         self.target_db = psycopg2.connect("postgresql://target/")
 
-        self.user_gen = UUIDGenerator(namespace="validation-users")
+        config = IDConfig(namespace=Namespace("validation-users"), salt="v1")
+
+        self.user_gen = UUIDGenerator(config)
 
     def validate_user_migration(self):
         """Validate that all users migrated correctly"""
