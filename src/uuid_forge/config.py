@@ -99,7 +99,7 @@ def load_config_from_env(
     if namespace_value:
         # Convert domain string to Namespace
         try:
-            namespace = Namespace(namespace_value)
+            namespace: uuid_module.UUID | Namespace = Namespace(namespace_value)
         except Exception as e:
             raise ValueError(
                 f"Invalid namespace value in {namespace_env}: {namespace_value}"
