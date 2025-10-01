@@ -59,7 +59,8 @@ UUID-Forge provides several predefined namespaces:
 You can define custom namespaces for your application:
 
 ```python
-from uuid_forge import UUIDGenerator
+from uuid_forge import UUIDGenerator, IDConfig, Namespace
+from uuid import UUID
 import uuid
 
 # Create a custom namespace for your application

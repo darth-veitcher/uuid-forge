@@ -275,7 +275,7 @@ from uuid_forge import UUIDGenerator
 
 class TestUUIDGeneration:
     def setUp(self):
-        self.generator = UUIDGenerator(namespace="test")
+        self.generator = UUIDGenerator(IDConfig(namespace=Namespace("test"), salt="v1"))
 
     def test_deterministic_generation(self):
         """Test that UUID generation is deterministic."""
@@ -310,7 +310,7 @@ from uuid_forge import UUIDGenerator
 @pytest.fixture
 def test_generator():
     """Provide a test UUID generator."""
-    return UUIDGenerator(namespace="test-namespace")
+    return UUIDGenerator(IDConfig(namespace=Namespace("test-namespace"), salt="v1"))
 
 @pytest.fixture
 def sample_data():
@@ -415,7 +415,7 @@ from uuid_forge import UUIDGenerator
 @pytest.mark.benchmark
 def test_uuid_generation_performance(benchmark):
     """Benchmark UUID generation performance."""
-    generator = UUIDGenerator(namespace="benchmark")
+    generator = UUIDGenerator(IDConfig(namespace=Namespace("benchmark"), salt="v1"))
 
     result = benchmark(generator.generate, "benchmark-data")
 

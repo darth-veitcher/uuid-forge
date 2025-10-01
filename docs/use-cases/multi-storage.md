@@ -34,23 +34,27 @@ Traditional approaches face challenges:
 Same input always produces the same UUID:
 
 ```python
-from uuid_forge import UUIDGenerator
+from uuid_forge import UUIDGenerator, IDConfig, Namespace
+from uuid import UUID
 
-# Initialize generator
-generator = UUIDGenerator(namespace="users")
+# Initialize generator with proper configuration
+config = IDConfig(namespace=Namespace("users.myapp.com"), salt="v1")
+generator = UUIDGenerator(config)
 
 # Same UUID across all storage systems
 user_email = "john@example.com"
-user_uuid = generator.generate(user_email)
+user_uuid = generator.generate("user", email=user_email)
 
 # Use in SQL database
 sql_insert = f"INSERT INTO users (id, email) VALUES ('{user_uuid}', '{user_email}')"
 
 # Use in MongoDB
-mongo_doc = {"_id": user_uuid, "email": user_email}
+mongo_doc = {"_id": str(user_uuid), "email": user_email}
 
 # Use as Redis key
 redis_key = f"user:{user_uuid}"
+
+# All systems reference the same deterministic UUID
 ```
 
 ## Implementation Patterns
@@ -61,15 +65,17 @@ redis_key = f"user:{user_uuid}"
 
 ```python
 import psycopg2
-from uuid_forge import UUIDGenerator
+from uuid_forge import UUIDGenerator, IDConfig, Namespace
+from uuid import UUID
 
 class UserRepository:
     def __init__(self):
-        self.generator = UUIDGenerator(namespace="users")
+        config = IDConfig(namespace=Namespace("users.myapp.com"), salt="v1")
+        self.generator = UUIDGenerator(config)
         self.conn = psycopg2.connect("postgresql://...")
 
-    def create_user(self, email, name):
-        user_id = self.generator.generate(email)
+    def create_user(self, email: str, name: str) -> UUID:
+        user_id = self.generator.generate("user", email=email)
 
         with self.conn.cursor() as cur:
             cur.execute(
@@ -79,9 +85,9 @@ class UserRepository:
 
         return user_id
 
-    def get_user_id(self, email):
+    def get_user_id(self, email: str) -> UUID:
         """Get consistent user ID without database lookup"""
-        return self.generator.generate(email)
+        return self.generator.generate("user", email=email)
 ```
 
 #### MongoDB Integration
@@ -92,7 +98,7 @@ from uuid_forge import UUIDGenerator
 
 class DocumentStore:
     def __init__(self):
-        self.generator = UUIDGenerator(namespace="documents")
+        self.generator = UUIDGenerator(IDConfig(namespace=Namespace("documents"), salt="v1"))
         self.client = MongoClient("mongodb://...")
         self.db = self.client.myapp
 
@@ -125,12 +131,12 @@ from uuid_forge import UUIDGenerator
 
 class CacheManager:
     def __init__(self):
-        self.user_generator = UUIDGenerator(namespace="users")
-        self.session_generator = UUIDGenerator(namespace="sessions")
+        self.user_generator = UUIDGenerator(IDConfig(namespace=Namespace("users"), salt="v1"))
+        self.session_generator = UUIDGenerator(IDConfig(namespace=Namespace("sessions"), salt="v1"))
         self.redis = redis.Redis(host="localhost", port=6379)
 
     def cache_user_data(self, email, user_data):
-        user_id = self.user_generator.generate(email)
+        user_id = self.user_generator.generate("user", email=email)
         cache_key = f"user:{user_id}"
 
         # Store in Redis with deterministic key
@@ -139,7 +145,7 @@ class CacheManager:
         return cache_key
 
     def get_cached_user(self, email):
-        user_id = self.user_generator.generate(email)
+        user_id = self.user_generator.generate("user", email=email)
         cache_key = f"user:{user_id}"
 
         cached_data = self.redis.get(cache_key)
@@ -156,7 +162,7 @@ from uuid_forge import UUIDGenerator
 
 class MessagePublisher:
     def __init__(self):
-        self.message_generator = UUIDGenerator(namespace="messages")
+        self.message_generator = UUIDGenerator(IDConfig(namespace=Namespace("messages"), salt="v1"))
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters("localhost")
         )
@@ -195,9 +201,9 @@ class MessagePublisher:
 ```python
 class OrderProcessingSystem:
     def __init__(self):
-        self.user_gen = UUIDGenerator(namespace="users")
-        self.order_gen = UUIDGenerator(namespace="orders")
-        self.product_gen = UUIDGenerator(namespace="products")
+        self.user_gen = UUIDGenerator(IDConfig(namespace=Namespace("users"), salt="v1"))
+        self.order_gen = UUIDGenerator(IDConfig(namespace=Namespace("orders"), salt="v1"))
+        self.product_gen = UUIDGenerator(IDConfig(namespace=Namespace("products"), salt="v1"))
 
         # Multiple storage systems
         self.postgres = psycopg2.connect("postgresql://...")
@@ -207,7 +213,7 @@ class OrderProcessingSystem:
 
     def process_order(self, user_email, product_skus, quantities):
         # Generate consistent IDs
-        user_id = self.user_gen.generate(user_email)
+        user_id = self.user_gen.generate("user", email=user_email)
 
         order_items = []
         for sku, qty in zip(product_skus, quantities):
@@ -274,7 +280,7 @@ from uuid_forge import UUIDGenerator
 class FileManager:
     def __init__(self, base_path):
         self.base_path = Path(base_path)
-        self.file_generator = UUIDGenerator(namespace="files")
+        self.file_generator = UUIDGenerator(IDConfig(namespace=Namespace("files"), salt="v1"))
 
     def store_file(self, content, metadata):
         # Generate deterministic file UUID
@@ -321,8 +327,8 @@ from uuid_forge import UUIDGenerator
 
 class TestMultiStorageConsistency:
     def setUp(self):
-        self.user_gen = UUIDGenerator(namespace="test-users")
-        self.order_gen = UUIDGenerator(namespace="test-orders")
+        self.user_gen = UUIDGenerator(IDConfig(namespace=Namespace("test-users"), salt="v1"))
+        self.order_gen = UUIDGenerator(IDConfig(namespace=Namespace("test-orders"), salt="v1"))
 
         # Initialize test storage systems
         self.setup_test_databases()
@@ -332,7 +338,7 @@ class TestMultiStorageConsistency:
         email = "test@example.com"
 
         # Generate UUID from different components
-        user_id_1 = self.user_gen.generate(email)
+        user_id_1 = self.user_gen.generate("user", email=email)
         user_id_2 = self.get_user_id_from_postgres(email)
         user_id_3 = self.get_user_id_from_cache(email)
         user_id_4 = self.get_user_id_from_mongo(email)
@@ -343,7 +349,7 @@ class TestMultiStorageConsistency:
     def test_cross_system_query(self):
         """Test querying data across multiple systems using consistent UUIDs"""
         email = "customer@example.com"
-        user_id = self.user_gen.generate(email)
+        user_id = self.user_gen.generate("user", email=email)
 
         # Store user in different systems
         self.store_user_in_postgres(user_id, email)
@@ -367,9 +373,9 @@ class TestMultiStorageConsistency:
 class ConsistencyValidator:
     def __init__(self):
         self.generators = {
-            "users": UUIDGenerator(namespace="users"),
-            "orders": UUIDGenerator(namespace="orders"),
-            "products": UUIDGenerator(namespace="products")
+            "users": UUIDGenerator(IDConfig(namespace=Namespace("users"), salt="v1")),
+            "orders": UUIDGenerator(IDConfig(namespace=Namespace("orders"), salt="v1")),
+            "products": UUIDGenerator(IDConfig(namespace=Namespace("products"), salt="v1"))
         }
 
     def validate_storage_consistency(self, entity_type, identifier):

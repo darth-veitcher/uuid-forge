@@ -169,7 +169,7 @@ Example test structure:
 ```python
 def test_uuid_generation_deterministic():
     """Test that UUID generation is deterministic."""
-    generator = UUIDGenerator(namespace="test")
+    generator = UUIDGenerator(IDConfig(namespace=Namespace("test"), salt="v1"))
 
     # Generate UUID multiple times
     uuid1 = generator.generate("test-data")

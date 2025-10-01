@@ -49,24 +49,30 @@ This enables:
 ## Quick Links
 
 ### 🚀 Quick Start
+
 Get up and running in minutes with our step-by-step guide.
 
 [Get Started →](getting-started/quickstart.md){ .md-button .md-button--primary }
 
 ### 📚 User Guide
+
 Learn core concepts and best practices for production use.
 
 [User Guide →](guide/concepts.md){ .md-button }
 
 ### 📖 API Reference
+
 Complete API documentation with examples and type signatures.
 
 [API Reference →](api/core.md){ .md-button }
 
 ### 🛠️ CLI Reference
+
 Command-line interface for generating UUIDs and managing config.
 
-[CLI Reference →](guide/cli.md){ .md-button }## Use Cases
+[CLI Reference →](guide/cli.md){ .md-button }
+
+## Use Cases
 
 ### Microservices Architecture
 
@@ -125,12 +131,12 @@ def test_invoice_processing():
 
 Traditional approaches to cross-system ID coordination have significant drawbacks:
 
-| Approach | Problems |
-|----------|----------|
-| **Central ID Service** | Single point of failure, latency, complexity |
-| **Database Lookups** | Performance impact, requires database access |
-| **ID Mappings** | Additional storage, synchronization challenges |
-| **Random UUIDs** | No reproducibility, requires storage everywhere |
+| Approach               | Problems                                        |
+| ---------------------- | ----------------------------------------------- |
+| **Central ID Service** | Single point of failure, latency, complexity    |
+| **Database Lookups**   | Performance impact, requires database access    |
+| **ID Mappings**        | Additional storage, synchronization challenges  |
+| **Random UUIDs**       | No reproducibility, requires storage everywhere |
 
 UUID-Forge eliminates all of these problems with deterministic generation.
 

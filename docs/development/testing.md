@@ -319,14 +319,14 @@ class TestDatabaseIntegration:
 
     def test_user_order_relationship(self, test_db):
         """Test maintaining relationships with deterministic UUIDs."""
-        user_gen = UUIDGenerator(namespace="db-users")
-        order_gen = UUIDGenerator(namespace="db-orders")
+        user_gen = UUIDGenerator(IDConfig(namespace=Namespace("db-users"), salt="v1"))
+        order_gen = UUIDGenerator(IDConfig(namespace=Namespace("db-orders"), salt="v1"))
 
         cursor = test_db.cursor()
 
         # Create user with deterministic UUID
         user_email = "dbtest@example.com"
-        user_id = user_gen.generate(user_email)
+        user_id = user_gen.generate("user", email=user_email)
 
         cursor.execute(
             "INSERT INTO users (id, email, name) VALUES (?, ?, ?)",
@@ -362,7 +362,7 @@ class TestDatabaseIntegration:
         assert result[1] == 100.50
 
         # Verify UUIDs are deterministic
-        user_id_2 = user_gen.generate(user_email)
+        user_id_2 = user_gen.generate("user", email=user_email)
         order_id_2 = order_gen.generate(order_data)
 
         assert user_id == user_id_2
@@ -381,11 +381,11 @@ class TestAPIIntegration:
 
     def test_rest_api_integration(self):
         """Test integration with REST API."""
-        user_gen = UUIDGenerator(namespace="api-users")
+        user_gen = UUIDGenerator(IDConfig(namespace=Namespace("api-users"), salt="v1"))
 
         with requests_mock.Mocker() as m:
             user_email = "apitest@example.com"
-            user_id = user_gen.generate(user_email)
+            user_id = user_gen.generate("user", email=user_email)
 
             # Mock API response
             m.post(
@@ -419,7 +419,7 @@ class TestDeterminismProperties:
     """Test determinism properties using Hypothesis."""
 
     def setUp(self):
-        self.generator = UUIDGenerator(namespace="property-test")
+        self.generator = UUIDGenerator(IDConfig(namespace=Namespace("property-test"), salt="v1"))
 
     @given(st.text(min_size=1))
     def test_determinism_property(self, input_text):
@@ -472,7 +472,7 @@ class TestPerformance:
     """Test performance requirements."""
 
     def setUp(self):
-        self.generator = UUIDGenerator(namespace="perf-test")
+        self.generator = UUIDGenerator(IDConfig(namespace=Namespace("perf-test"), salt="v1"))
 
     @pytest.mark.benchmark
     def test_single_generation_speed(self, benchmark):
@@ -548,7 +548,7 @@ class TestMemoryUsage:
     @profile
     def test_memory_profile_batch_generation(self):
         """Profile memory usage during batch generation."""
-        generator = UUIDGenerator(namespace="memory-test")
+        generator = UUIDGenerator(IDConfig(namespace=Namespace("memory-test"), salt="v1"))
 
         # Generate many UUIDs to observe memory pattern
         uuids = []
