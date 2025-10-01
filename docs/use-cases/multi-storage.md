@@ -102,20 +102,23 @@ class DocumentStore:
         self.client = MongoClient("mongodb://...")
         self.db = self.client.myapp
 
-    def store_document(self, content, metadata):
-        doc_data = {
-            "content": content,
-            "metadata": metadata,
-            "created_at": datetime.utcnow()
-        }
+    def store_document(self, content: str, metadata: dict):
+        created_at = datetime.utcnow().isoformat()
 
         # Generate deterministic ID from content and metadata
-        doc_id = self.generator.generate(doc_data)
+        doc_id = self.generator.generate(
+            "document",
+            content=content,
+            metadata=str(metadata),
+            created_at=created_at
+        )
 
         # Store in MongoDB
         self.db.documents.insert_one({
-            "_id": doc_id,
-            **doc_data
+            "_id": str(doc_id),
+            "content": content,
+            "metadata": metadata,
+            "created_at": created_at
         })
 
         return doc_id
@@ -168,17 +171,18 @@ class MessagePublisher:
         )
         self.channel = self.connection.channel()
 
-    def publish_user_event(self, user_email, event_type, event_data):
-        # Generate deterministic correlation ID
-        correlation_data = {
-            "user_email": user_email,
-            "event_type": event_type,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        correlation_id = self.message_generator.generate(correlation_data)
+    def publish_user_event(self, user_email: str, event_type: str, event_data: dict):
+        # Generate deterministic correlation ID from event attributes
+        timestamp = datetime.utcnow().isoformat()
+        correlation_id = self.message_generator.generate(
+            "event",
+            user_email=user_email,
+            event_type=event_type,
+            timestamp=timestamp
+        )
 
         message = {
-            "correlation_id": correlation_id,
+            "correlation_id": str(correlation_id),
             "user_email": user_email,
             "event_type": event_type,
             "data": event_data
@@ -188,7 +192,7 @@ class MessagePublisher:
             exchange="user_events",
             routing_key=event_type,
             body=json.dumps(message),
-            properties=pika.BasicProperties(correlation_id=correlation_id)
+            properties=pika.BasicProperties(correlation_id=str(correlation_id))
         )
 
         return correlation_id
