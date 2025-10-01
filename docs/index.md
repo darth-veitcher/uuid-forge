@@ -48,43 +48,25 @@ This enables:
 
 ## Quick Links
 
-<div class="grid cards" markdown>
+### 🚀 Quick Start
+Get up and running in minutes with our step-by-step guide.
 
--   :material-clock-fast:{ .lg .middle } __Quick Start__
+[Get Started →](getting-started/quickstart.md){ .md-button .md-button--primary }
 
-    ---
+### 📚 User Guide
+Learn core concepts and best practices for production use.
 
-    Get up and running in minutes with our step-by-step guide.
+[User Guide →](guide/concepts.md){ .md-button }
 
-    [:octicons-arrow-right-24: Quick Start](getting-started/quickstart.md)
+### 📖 API Reference
+Complete API documentation with examples and type signatures.
 
--   :material-book-open-variant:{ .lg .middle } __User Guide__
+[API Reference →](api/core.md){ .md-button }
 
-    ---
+### 🛠️ CLI Reference
+Command-line interface for generating UUIDs and managing config.
 
-    Learn core concepts and best practices for production use.
-
-    [:octicons-arrow-right-24: User Guide](guide/concepts.md)
-
--   :material-application-brackets:{ .lg .middle } __API Reference__
-
-    ---
-
-    Complete API documentation with examples and type signatures.
-
-    [:octicons-arrow-right-24: API Reference](api/core.md)
-
--   :material-code-braces:{ .lg .middle } __CLI Reference__
-
-    ---
-
-    Command-line interface for generating UUIDs and managing config.
-
-    [:octicons-arrow-right-24: CLI Reference](guide/cli.md)
-
-</div>
-
-## Use Cases
+[CLI Reference →](guide/cli.md){ .md-button }## Use Cases
 
 ### Microservices Architecture
 

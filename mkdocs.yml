@@ -87,6 +87,7 @@ markdown_extensions:
       alternate_style: true
   - pymdownx.tasklist:
       custom_checkbox: true
+  - pymdownx.emoji
   - attr_list
   - md_in_html
   - tables
